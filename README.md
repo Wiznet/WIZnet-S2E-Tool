@@ -11,8 +11,6 @@ WIZnet CLI(Command Line Interface) module Configuration Tool
     $ pip install pyserial
 If you want more detail, please refer to https://github.com/pyserial/pyserial
 
-
-
 # Usage
     wiz750_configTool.py [Optins ...]
 <pre><code>$ wiz750_configTool.py -h
@@ -97,10 +95,11 @@ UART Command mode switch settings:
 
 Configuration from File:
   --setfile SETFILE     File name to Set
-  --getfile GETFILE     File name to Get info (refer default_cmd.txt)
+  --getfile GETFILE     File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).
 
-Set Ip address:
-  -m, --multiset        Set multi IP for all device (in mac_list.txt)</code></pre>
+Set IP address for multi devices:
+  -m ipaddr, --multiset ipaddr
+                        Set IP address for all device in 'mac_list.txt'. Parameter is first address.</code></pre>
 
 # Muliple Device Test
     wiz750_mutiple_test.py -r [Retry number]

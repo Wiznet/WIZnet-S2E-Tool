@@ -168,7 +168,7 @@ if __name__ == '__main__':
     op_code = OP_SEARCHALL
     # print(args)
 
-    if args.search or args.clear or args.multiset:
+    if args.search or args.clear:
         if len(sys.argv) is not 2:
             print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
             sys.exit(0)
@@ -265,7 +265,8 @@ if __name__ == '__main__':
                 mac_list = f.readlines()
                 f.close()
                 # print(mac_list, len(mac_list))
-                host_ip = str(wizmakecmd.get_hostip())
+                # host_ip = str(wizmakecmd.get_hostip())
+                host_ip = args.multiset
                 # print('Host ip: %s\n' % host_ip)
                 for i in range(len(mac_list)):
                     mac_addr = re.sub('[\r\n]', '', mac_list[i])
@@ -281,7 +282,7 @@ if __name__ == '__main__':
                             time.sleep(1)
                             dst_port = '5000'                            
                             lastnumindex = host_ip.rfind('.')
-                            lastnum = 50
+                            lastnum = int(host_ip[lastnumindex + 1:])
                             target_ip = host_ip[:lastnumindex + 1] + str(lastnum + i)
                             target_gw = host_ip[:lastnumindex + 1] + str(1)
                             print('[All] Set IP for devices %s -> %s' % (mac_addr, target_ip))

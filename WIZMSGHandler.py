@@ -171,8 +171,8 @@ class WIZMSGHandler:
                                 self.mac_list.append(replylists[i][2:])
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
                             # if 'MN' in replylists[i] and "WIZ752SR-12x" not in replylists[i][2:] :
-                            if 'MN' in replylists[i] and "WIZ750SR" not in replylists[i][2:] :
-                                self.mac_list.pop()
+                            # if 'MN' in replylists[i] and "WIZ750SR" not in replylists[i][2:] :
+                            #     self.mac_list.pop()
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
                             # if 'VR' in replylists[i] and "1.0.0" not in replylists[i][2:] :
                             if 'VR' in replylists[i] and "1.1.2dev" in replylists[i][2:] :
@@ -251,6 +251,8 @@ class WIZMSGHandler:
                 sys.stdout.write("<LI> IP address: %r\r\n" % (self.getreply[i][2:]))
 
     def get_filelog(self, mac_addr):
+        # print('getreply: %s' % self.getreply)
+
         for i in range(0, len(self.getreply)):
             if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
                 cmdsetObj = WIZ752CMDSET(logging.ERROR)
@@ -272,13 +274,12 @@ class WIZMSGHandler:
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
                 # sys.stdout.write("%s\r\n" % self.getreply[i])
-                # info = "%s: %s \t\t-> %s: %s\r\n" % (cmd, param, cmd_desc, param_desc)
-                info = "%02d) %s: %s\r\n" % (i-1, cmd_desc, param_desc)
+                info = "%02d) %s: %s \t\t-> %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
+                # info = "%02d) %s: %s\r\n" % (i-1, cmd_desc, param_desc)
                 f.write(info)
             f.close()
+        f = open(filename, 'r')
+        readinfo = f.read()
+        print(readinfo)       
         
         print('@ Refer to \"%s\" for detail.\n' % filename)
-
-
-
-            

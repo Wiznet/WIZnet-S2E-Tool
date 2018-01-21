@@ -122,11 +122,11 @@ class WIZArgParser:
         group = parser.add_argument_group('\nConfiguration from File')
 
         group.add_argument('--setfile', help='File name to Set')
-        group.add_argument('--getfile', help='File name to Get info (refer default_cmd.txt)')
+        group.add_argument('--getfile', help='File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).')
 
         ## Set multiIP
-        group = parser.add_argument_group('\nSet Ip address')
-        group.add_argument('-m', '--multiset', action='store_true', help='Set multi IP for all device (in mac_list.txt)')
-                
+        group = parser.add_argument_group('\nSet IP address for multi devices')
+        # group.add_argument('-m', '--multiset', action='store_true', help='Set multi IP for all device (in mac_list.txt)')
+        group.add_argument('-m', '--multiset', metavar='ipaddr', help='''Set IP address for all device in 'mac_list.txt'. Parameter is first address.''')
         args = parser.parse_args()
         return args
