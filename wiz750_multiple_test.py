@@ -28,7 +28,7 @@ if __name__=='__main__':
         sys.exit(0)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:c:r:")
+        opts, args = getopt.getopt(sys.argv[1:], "hs:t:r:")
     except getopt.GetoptError:
         sys.stdout.write('Invalid syntax. Refer to below\r\n')
         sys.stdout.write('wiz750_multiple_test.py -r <packet_send count>\r\n')
@@ -44,7 +44,10 @@ if __name__=='__main__':
                 sys.exit(0)
             elif opt in ("-r", "--retry"):
                 retrycount = int(arg)
-                sys.stdout.write('%r\r\n' % retrycount)
+                # sys.stdout.write('%r\r\n' % retrycount)
+            elif opt in ("-t", "--target"):
+                dst_ip = arg
+                # sys.stdout.write('%r\r\n' % dst_ip)
 
         conf_sock = WIZUDPSock(5000, 50001)
         conf_sock.open()
@@ -75,7 +78,7 @@ if __name__=='__main__':
         ###################################
         # Set a consequent IP address and the same port number 5000 to each WIZ750SR Device
 
-        dst_ip = "192.168.50.50"
+        # dst_ip = "192.168.50.50"
         dst_port = "5000"
 
         lastnumindex = dst_ip.rfind('.')
