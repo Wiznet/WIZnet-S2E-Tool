@@ -23,18 +23,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 OP_SEARCHALL = 1
-OP_SETIP = 2
+OP_GETCOMMAND = 2
 OP_SETCOMMAND = 3
 OP_SETFILE = 4
 OP_GETFILE = 5
 OP_FWUP = 6
 
-# UART: available parameter list
 BAUDRATES = [300, 600, 1200, 1800, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400]
-# DATABIT = [7, 8]     # default: 8
-# PARITY = ['NONE', 'ODD', 'EVEN']    # default: NONE
-# STOPBIT = ['1-bit', '2-bit']       # default: 1
-# FLOWCONTROL = ['NONE', 'XON/XOFF', 'RTS/CTS']   # default: NONE
 
 class WIZMakeCMD:
     def search(self):
@@ -85,10 +80,11 @@ class WIZMakeCMD:
         return cmd_list
 
     # 장치 정보 획득 (Get)
-    def getcmd(self, cmd_list, macaddr, command_list):
-        cmd_list[:] = []    # 초기화
+    def getcommand(self, macaddr, command_list):
+        cmd_list = []    # 초기화
         cmd_list.append(["MA", macaddr])
         cmd_list.append(["PW", " "])
+        cmd_list.append(["MC", ""])
         for i in range(len(command_list)):
             cmd_list.append([command_list[i], ""]) 
         return cmd_list
@@ -103,7 +99,6 @@ class WIZMakeCMD:
                 cmd_list.append([command_list[i], param_list[i]]) 
             cmd_list.append(["SV", ""]) # save device setting
             cmd_list.append(["RT", ""]) # Device reboot
-            
             return cmd_list
         except Exception as e:
             sys.stdout.write('%r\r\n' % e)            
@@ -155,7 +150,7 @@ if __name__ == '__main__':
     wizarg = WIZArgParser()
     args = wizarg.config_arg()
 
-    wiz107cmdObj = WIZ750CMDSET(1)
+    wiz750cmdObj = WIZ750CMDSET(1)
 
     conf_sock = WIZUDPSock(5000, 50001)
     conf_sock.open()
@@ -190,8 +185,8 @@ if __name__ == '__main__':
     else:
         if args.macaddr:
             mac_addr = args.macaddr
-            if wiz107cmdObj.isvalidparameter("MC", mac_addr) is False :
-                sys.stdout.write("Invalid Mac address\r\n")
+            if wiz750cmdObj.isvalidparameter("MC", mac_addr) is False :
+                sys.stdout.write("Invalid Mac address!\r\n")
                 sys.exit(0)
         # file config
         if args.getfile or args.setfile:
@@ -201,7 +196,7 @@ if __name__ == '__main__':
                 cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
             elif args.getfile:
                 op_code = OP_GETFILE
-                cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)        
+                cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
         else:
             op_code = OP_SETCOMMAND
             print('Devcie configuration start...')
@@ -257,17 +252,25 @@ if __name__ == '__main__':
             # Command mode switch settings
             if args.te: setcmd['TE'] = args.te
             if args.ss: setcmd['SS'] = args.ss
-            # print(setcmd, len(setcmd))
+            # print(setcmd)
 
             # ALL devices set or setip
             if args.all or args.multiset:
+                if not os.path.isfile('mac_list.txt'):
+                    print('There is no mac_list.txt file. Please search devices first from \'-s/--search\' option.')
+                    sys.exit(0)
                 f = open('mac_list.txt', 'r')
                 mac_list = f.readlines()
                 f.close()
-                # print(mac_list, len(mac_list))
-                # host_ip = str(wizmakecmd.get_hostip())
-                host_ip = args.multiset
+
+                if args.multiset:
+                    host_ip = args.multiset
+                elif args.ip:
+                    host_ip = args.ip
                 # print('Host ip: %s\n' % host_ip)
+                if wiz750cmdObj.isvalidparameter("LI", host_ip) is False :
+                    sys.stdout.write("Invalid IP address!\r\n")
+                    sys.exit(0)
                 for i in range(len(mac_list)):
                     mac_addr = re.sub('[\r\n]', '', mac_list[i])
                     if args.fwfile:
@@ -290,7 +293,9 @@ if __name__ == '__main__':
                             setcmd['GW'] = target_gw
                             setcmd['LP'] = dst_port
                             setcmd['OP'] = '1'
+                            getcmd = setcmd
                             cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
+                            get_cmd_list = wizmakecmd.getcommand(mac_addr, getcmd.keys())
                         # elif args.getfile:
                         #     print('\nGet device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
                         #     wizmsghangler.get_filelog(mac_addr)
@@ -305,7 +310,9 @@ if __name__ == '__main__':
                             else:
                                 op_code = OP_SETCOMMAND
                                 print('[All] Setting devcies %d: %s' % (i+1, mac_addr))
+                                getcmd = setcmd
                                 cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
+                                get_cmd_list = wizmakecmd.getcommand(mac_addr, getcmd.keys())
                         # print(cmd_list)
                         wizmsghangler.makecommands(cmd_list, op_code)
                         wizmsghangler.sendcommands()
@@ -329,8 +336,17 @@ if __name__ == '__main__':
                     print('Device %s Factory reset' % mac_addr)
                     cmd_list = wizmakecmd.factory_reset(mac_addr)
                 else:
+                    if args.ip and wiz750cmdObj.isvalidparameter("LI", args.ip) is False :
+                        sys.stdout.write("Invalid IP address!\r\n")
+                        sys.exit(0)
+                    
+                    getcmd = setcmd
                     print('Single devcie config: %s' % mac_addr)
                     cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
+                    # 설정 로그 get
+                    get_cmd_list = wizmakecmd.getcommand(mac_addr, getcmd.keys())
+                    # print(get_cmd_list)
+                    
         if args.all or args.multiset:
             pass
         else:
@@ -358,5 +374,16 @@ if __name__ == '__main__':
         print('\nDevice configuration from \'%s\' complete!' % args.setfile)
     elif op_code is OP_SETCOMMAND:
         print('\nDevice configuration complete!')
+
+        # 설정한 내용을 다시 읽어옴    
+        print('\nSet result: ')
+        
+        print('get_cmd_list: %s' % get_cmd_list)
+        wizmsghangler.makecommands(get_cmd_list, OP_GETCOMMAND)
+        wizmsghangler.sendcommands()
+        num = wizmsghangler.parseresponse()
+        if num is None:
+            print('No reponse for get command')
+        
 
         

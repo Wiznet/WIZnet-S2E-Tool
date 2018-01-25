@@ -11,6 +11,8 @@ from WIZ750CMDSET import WIZ750CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from TCPClientThread import TCPClientThread
+from WIZArgParser import WIZArgParser
+from wiz750_configTool import WIZMakeCMD
 
 OP_SEARCHALL = 1
 OP_SETIP = 2
@@ -18,36 +20,24 @@ OP_CHECKIP = 3
 OP_FACTORYRESET = 4
 OP_GETDETAIL = 5
 
+ONE_PORT_S2E = '1'
+TWO_PORT_S2E = '2'
+
 if __name__=='__main__':
+    wizarg = WIZArgParser()
+    args = wizarg.loopback_arg()
+    # print(args)
+        
+    wizmakecmd = WIZMakeCMD()
 
-    retrycount = 10
-
-    if len(sys.argv) <= 2:
-        sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('wiz750_multiple_test.py -r <packet_send count>\r\n')
-        sys.exit(0)
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:t:r:")
-    except getopt.GetoptError:
-        sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('wiz750_multiple_test.py -r <packet_send count>\r\n')
+    if len(sys.argv) <= 4:
+        print('Invalid syntax. Please refer to %s -h\n' % sys.argv[0])
         sys.exit(0)
 
     threads = []
 
     try:
-        for opt, arg in opts:
-            if opt == '-h':
-                sys.stdout.write('Valid syntax\r\n')
-                sys.stdout.write('wiz750_multiple_test.py -r <packet_send count>\r\n')
-                sys.exit(0)
-            elif opt in ("-r", "--retry"):
-                retrycount = int(arg)
-                # sys.stdout.write('%r\r\n' % retrycount)
-            elif opt in ("-t", "--target"):
-                dst_ip = arg
-                # sys.stdout.write('%r\r\n' % dst_ip)
+        retrycount = args.retry
 
         conf_sock = WIZUDPSock(5000, 50001)
         conf_sock.open()
@@ -56,19 +46,7 @@ if __name__=='__main__':
 
         ###################################
         # Search All Devices on the network
-        cmd_list.append(["MA", "FF:FF:FF:FF:FF:FF"])
-        cmd_list.append(["PW", " "])
-        cmd_list.append(["MC", ""])
-        cmd_list.append(["VR", ""])
-        cmd_list.append(["MN", ""])
-        cmd_list.append(["UN", ""])
-        cmd_list.append(["ST", ""])
-        cmd_list.append(["IM", ""])
-        cmd_list.append(["OP", ""])
-        cmd_list.append(["DD", ""])
-        cmd_list.append(["CP", ""])
-        cmd_list.append(["PO", ""])
-        cmd_list.append(["DG", ""])
+        cmd_list = wizmakecmd.search()
         # sys.stdout.write("%s\r\n" % cmd_list)
         wizmsghangler.makecommands(cmd_list, OP_SEARCHALL)
         wizmsghangler.sendcommands()
@@ -77,9 +55,12 @@ if __name__=='__main__':
 
         ###################################
         # Set a consequent IP address and the same port number 5000 to each WIZ750SR Device
-
         # dst_ip = "192.168.50.50"
-        dst_port = "5000"
+        dst_ip = args.targetip
+        # print(dst_ip)
+        ch0_dst_port = "5000"
+        if args.select is TWO_PORT_S2E:
+            ch1_dst_port = "5001"
 
         lastnumindex = dst_ip.rfind('.')
         lastnum = int(dst_ip[lastnumindex+1:len(dst_ip)])
@@ -87,14 +68,16 @@ if __name__=='__main__':
             for i in range(0, retval):
                 cmd_list[:] = []
                 mac_addr = wizmsghangler.getmacaddr(i)
-                print ("mac addr: " + mac_addr)
+                print ("Device %d mac addr: %s" % (i+1, mac_addr))
                 target_ip = dst_ip[:lastnumindex + 1] + str(lastnum + i)
                 target_gw = dst_ip[:lastnumindex + 1] + str(1)
                 cmd_list.append(["MA", mac_addr])
                 cmd_list.append(["PW", " "])
                 cmd_list.append(["LI", target_ip])
                 cmd_list.append(["GW", target_gw])
-                cmd_list.append(["LP", dst_port])
+                cmd_list.append(["LP", ch0_dst_port])
+                if args.select is TWO_PORT_S2E:
+                    cmd_list.append(["QL", ch1_dst_port])
                 cmd_list.append(["OP", "1"])
                 cmd_list.append(["SV", ""]) # save device setting
                 cmd_list.append(["RT", ""]) # Device reboot
@@ -104,30 +87,19 @@ if __name__=='__main__':
                 wizmsghangler.parseresponse()
     
                 time.sleep(2)
-                t = TCPClientThread(target_ip, int(dst_port), retrycount)
+                t = TCPClientThread(target_ip, int(ch0_dst_port), retrycount)
                 t.start()
                 threads.append(t)
-                # time.sleep(2)
+
+                if args.select is TWO_PORT_S2E:
+                    time.sleep(2)
+                    t2 = TCPClientThread(target_ip, int(ch1_dst_port), retrycount)
+                    t2.start()
+                    threads.append(t2)
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('Keyboard interrupt occured!!')
             for i in range(retrycount):
                 threads[i].stop()
-
-        ###################################
-        # Factory Reset all selected Devices
-        # for i in range(0, retval):
-        #     cmd_list[:] = []
-        #     mac_addr = wizmsghangler.getmacaddr(i)
-        #     cmd_list.append(["MA", mac_addr])
-        #     cmd_list.append(["PW", ""])
-        #     cmd_list.append(["FR", ""])
-        #     cmd_list.append(["RT", ""])
-        #     # sys.stdout.write("%s\r\n" % cmd_list)
-        #     wizmsghangler.makecommands(cmd_list, OP_FACTORYRESET)
-        #     wizmsghangler.sendcommands()
-        #     wizmsghangler.parseresponse()
-
-        # sys.stdout.write("%s\r\n" % cmd_list)
 
         end_flag = False
         stop_thread_count = 0
@@ -151,6 +123,7 @@ if __name__=='__main__':
     except (KeyboardInterrupt, SystemExit):
         for i in range(len(threads)):
             threads[i].stop()
+            print('thread %d stop. %s' % (i, thread[i]))
     finally:
         for i in range(0, retval):
             cmd_list[:] = []

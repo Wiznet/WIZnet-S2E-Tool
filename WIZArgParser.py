@@ -16,9 +16,23 @@ class WIZArgParser:
         parser = argparse.ArgumentParser(description='<WIZnet CLI Test Tool>',
                                         epilog=None,
                                         formatter_class=argparse.RawTextHelpFormatter)
-        parser.add_argument('-d', '--device', 
-                help='Serial device name (ex: /dev/ttyUSB0 or COMX)')
-        parser.add_argument('-r', dest='retry_number', help='Test retry number')
+        parser.add_argument('device', help='Serial device name (ex: /dev/ttyUSB0 or COMX)')
+        parser.add_argument('-r', '--retry', type=int, default=5, help='Test retry number (default: 5)')
+        # parser.add_argument('-t', '--target', help='Target IP address')
+        parser.add_argument('-b', '--baud', default='115200', help='Baud rate (300 to 230400)')
+
+        args = parser.parse_args()
+        return args
+
+    def loopback_arg(self):
+        parser = argparse.ArgumentParser(description='<WIZnet CLI Multiple Test Tool>',
+                                        epilog=None,
+                                        formatter_class=argparse.RawTextHelpFormatter)
+        parser.add_argument('-s', '--select', choices=['1','2'], default='1', 
+                                help='Select number of serial port (1: One port S2E, 2: Two port S2E)')
+        parser.add_argument('-t', '--targetip', help='Target IP address')
+        parser.add_argument('-r', '--retry', type=int, default=5, help='Test retry number (default: 5)')
+        
 
         args = parser.parse_args()
         return args
@@ -41,7 +55,6 @@ class WIZArgParser:
         group.add_argument('-r', '--reset', action='store_true', help='Reboot device')
         group.add_argument('-f', '--factory', action='store_true', help='Factory reset')
         
-
         ## Network config
         group = parser.add_argument_group('Network Configuration')
         # exclusive_group = group.add_mutually_exclusive_group()
@@ -59,7 +72,7 @@ class WIZArgParser:
 
         ## UART 0 config
         group = parser.add_argument_group('UART #0 Configurations')
-        group.add_argument('--baud0', type=int, help='''baue rate (300 to 230400)''')
+        group.add_argument('--baud0', type=int, help='''baud rate (300 to 230400)''')
         group.add_argument('--data0', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity0', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
         group.add_argument('--stop0', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')
@@ -70,7 +83,7 @@ class WIZArgParser:
 
         ## UART 1 config
         group = parser.add_argument_group('UART #1 Configurations')
-        group.add_argument('--baud1', type=int, help='''baue rate (300 to 230400)''')
+        group.add_argument('--baud1', type=int, help='''baud rate (300 to 230400)''')
         group.add_argument('--data1', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity1', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
         group.add_argument('--stop1', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')

@@ -1,20 +1,116 @@
-WIZnet CLI(Command Line Interface) module Configuration Tool
-- Available  python 2.7
+WIZnet CLI(Command Line Interface) module Configuration Tool for WIZ75X Series.
 
-- [Pre-required](#Pre-required)
-- [Usage](#Usage)
+# DEVICES
 
-# Pre-required
+## WIZ750SR
+WIZ750SR is WIZnet Serial to Ethernet(S2E) module based on W7500 chip, WIZ107/108SR S2E compatible device. 
+<!-- WIZ750SR pic -->
+<p align="center">
+<img width="80%" src="http://wizwiki.net/wiki/lib/exe/fetch.php?media=products:wiz750sr:wiz750sr_rev1.0_main_1024x693.png" />
+</p>
 
-## pyserial
+## WIZ750SR-EVB
+WIZ750SR-EVB is evaluation board for WIZ750SR.
+
+<!-- WIZ750SR EVB pic -->
+<p align="center">
+  <img width="70%" src="http://wizwiki.net/wiki/lib/exe/fetch.php?media=products:wiz750sr:gettingstarted:wiz750sr-ttl-evb_1_1024x816.png" />
+</p>
+
+For more detail, refer below links.
+- [WIZ750SR WIKI page](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
+- [WIZ750SR Product page](http://www.wiznet.io/product-item/wiz750sr/)
+- [WIZ750SR Github](WIZhttps://github.com/Wiznet/WIZ750SR)
+
+<!-- ## WIZ752SR
+WIZ752SR is two port S2E device. for more detail, refer below links. -->
+
+
+# CONFIGURATION TOOL
+## Pre-Required
+### Check Python version
+WIZnetTool works on Python version 2.7.X. Before use this, check the version as follow.
+
+    $ python --version
+
+If you don't have Python, refer to https://www.python.org/
+
+
+### pySerial
+Next, you must install **pySerial** module as follow.
 
     $ pip install pyserial
-If you want more detail, please refer to https://github.com/pyserial/pyserial
+If you want more detail, refer to https://github.com/pyserial/pyserial
 
-# Usage
-    wiz750_configTool.py [Optins ...]
-<pre><code>$ wiz750_configTool.py -h
-optional arguments:
+## Usage
+    $ python wiz750_configTool.py [Optins ...]
+
+### Search Devices
+First, you could search devices use '-s' or '--search' option. 
+
+    $ python wiz750_configTool.py -s
+And then **mac_list.txt** is created, there are MAC address information of each devices.
+
+
+
+### Configuration
+#### Single Device
+    $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX [Optins ...]
+
+
+#### All Devices
+    $ python wiz750_configTool.py -a [Optins ...]
+
+
+### Firmware Upload
+When do device's firmware upload, need TCP connection with devices to send Firmware file. So first, use **-m/--multiset** option for set ip address to the same network band as host.
+
+    python wiz750_configTool.py -m <IP address>
+
+And you must use **App part firmware** file when do this. To download firmware file, refer to below.
+
+- https://github.com/Wiznet/WIZ750SR/releases
+- https://github.com/Wiznet/WIZ750SR/tree/master/Projects/S2E_App/bin
+
+* Single devcie
+
+      $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX -u <F/W file path>
+
+* All device
+
+      $ python wiz750_configTool.py -a -u <F/W file path>
+
+### Use File
+
+Before use this option, refer to command manual of WIZnet wiki.
+- [WIZ750SR Command Manual](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:commandmanual:start)
+
+#### Getfile
+You can check all configuration information of the device use --getfile option.
+
+    $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX --getfile cmd_oneport.txt
+
+#### Setfile
+You can save the settings you want to keep to a file and set them with the --setfile option. It can be used as macro.
+
+First, list up commands to file. here is an example file, **set_cmd.txt**
+<pre><code>IM0
+LI192.168.0.25
+SM255.255.255.0
+GW192.168.0.1
+LP5000
+BR12</pre></code>
+
+Then, config deivce use --setfile option.
+
+    $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt
+
+
+## Available Options
+You can see this description as following command.
+
+    $ python wiz750_configTool.py -h
+<pre><code>optional arguments:
   -h, --help            show this help message and exit
   -d MACADDR, --device MACADDR
                         Device mac address to configuration
@@ -101,5 +197,25 @@ Set IP address for multi devices:
   -m ipaddr, --multiset ipaddr
                         Set IP address for all device in 'mac_list.txt'. Parameter is first address.</code></pre>
 
-# Muliple Device Test
-    wiz750_mutiple_test.py -r [Retry number]
+# MUTIPLE LOOPBACK TEST
+
+This tool perform simple loopback test for functional verification of WIZ75XSR devices.
+
+For use this on WIZ750SR-EVB, The TX-RX of serial connector must be connected (use jumper connector).
+
+## Usage
+    $ python wiz75x_loopback_test.py -h
+<code><pre>optional arguments:
+  -h, --help                         show this help message and exit
+  -s {1,2}, --select {1,2}           Select number of serial port (1: One port S2E, 2: Two port S2E)
+  -t TARGETIP, --targetip TARGETIP   Target IP address
+  -r RETRY, --retry RETRY            Test retry number (default: 5)</code></pre>
+
+## Loopback test
+Targetip option is for set ip address to the same network band as host.
+
+    $ python wiz75x_loopback_test.py -s 1 -t 192.168.X.X
+
+
+
+

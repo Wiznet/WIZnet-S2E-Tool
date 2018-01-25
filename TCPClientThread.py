@@ -38,12 +38,13 @@ class TCPClientThread(threading.Thread):
         if self.timer1 is not None:
             if self.timer1.is_alive():
                 self.timer1.cancel()
-        sys.stdout.write('thread for %r ' % self.serverip)
+        # sys.stdout.write('thread for %r ' % self.serverip)
+        sys.stdout.write('thread for %s:%s ' % (self.serverip, self.serverport))
         sys.stdout.write('is shutdowning\r\n')
         # if not self.f.closed:
         if self.totaltrycount > 0:
             logstr = "======================================\r\n"
-            logstr = logstr + '[' + self.serverip + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
+            logstr = logstr + '[' + self.serverip + ':' + str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
             logstr = logstr + 'Total try: ' + str(self.totaltrycount) + '\r\n'
             logstr = logstr + 'Success count: ' + str(self.successcount) + '\r\n'
             logstr = logstr + 'Fail count: ' + str(self.failcount) + '\r\n'
@@ -53,7 +54,7 @@ class TCPClientThread(threading.Thread):
             sys.stdout.write(logstr)
         else:
             logstr = "======================================\r\n"
-            logstr = logstr + '[' + self.serverip + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
+            logstr = logstr + '[' + self.serverip + ':' + str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
             logstr = logstr + 'Connection Failed\r\n'
             logstr = logstr + '======================================\r\n'
             sys.stdout.write(logstr)
@@ -103,6 +104,7 @@ class TCPClientThread(threading.Thread):
                     # sys.stdout.write('1 : %r' % self.client.getsockstate())
                     if self.client.state is SOCK_OPEN_STATE:
                         sys.stdout.write('[%r] is OPEN\r\n' % (self.serverip))
+                        # sys.stdout.write('[%s:%s] is OPEN\r\n' % (self.serverip, self.serverport))
                         # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
                         time.sleep(1)
 
@@ -112,9 +114,9 @@ class TCPClientThread(threading.Thread):
                     # sys.stdout.write('2 : %r' % self.client.getsockstate())
                     if self.client.state is SOCK_CONNECT_STATE:
                         sys.stdout.write('[%r] is CONNECTED\r\n' % (self.serverip))
+                        # sys.stdout.write('[%s:%s] is CONNECTED\r\n' % (self.serverip, self.serverport))
                         # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
                         time.sleep(1)
-
 
                 elif self.client.state is SOCK_CONNECT_STATE:
                     if self.client.working_state == idle_state:
@@ -133,11 +135,14 @@ class TCPClientThread(threading.Thread):
 
                             self.timer1 = threading.Timer(2.0, self.myTimer)
                             self.timer1.start()
-                            sys.stdout.write('timer 1 started\r\n')
+                            # sys.stdout.write('timer 1 started\r\n')
                         except Exception as e:
                             sys.stdout.write('%r\r\n' % e)
                     elif self.client.working_state == datasent_state:
                         # sys.stdout.write('4 : %r' % self.client.getsockstate())
+                        # minimum delay
+                        time.sleep(0.05)
+                        # time.sleep(1.5)
                         response = self.client.readline()
                         if (response != ""):
                             logstr = '[' + self.serverip + '] received ' + response + '\r\n'
@@ -145,7 +150,7 @@ class TCPClientThread(threading.Thread):
                             sys.stdout.flush()
                             # self.f.write(logstr)
                             self.timer1.cancel()
-                            sys.stdout.write('timer 1 cancelled\r\n')
+                            # sys.stdout.write('timer 1 cancelled\r\n')
                             self.istimeout = 0
 
                             if (msg in response):
@@ -161,7 +166,7 @@ class TCPClientThread(threading.Thread):
                                 self.failcount += 1
                             # self.f.write(logstr)
 
-                            logstr = logstr + ' success rate : ' \
+                            logstr = logstr + 'success rate : ' \
                                      + "{0:.2f}".format(float(self.successcount) / float(self.totaltrycount) * 100) + '%, [' \
                                      + str(self.successcount) + '/' + str(self.totaltrycount) + ']\r\n'
                             sys.stdout.write(logstr)
@@ -211,14 +216,14 @@ if __name__ == '__main__':
 
     if len(sys.argv) <= 4:
         sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('%s -s <WIZ107SR ip address> -c <server count>\r\n)' % sys.argv[0])
+        sys.stdout.write('%s -s <WIZ750SR ip address> -c <server count>\r\n)' % sys.argv[0])
         sys.exit(0)
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:c:r:")
     except getopt.GetoptError:
         sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('%s -s <WIZ107SR ip address>  -c <server count>\r\n)' % sys.argv[0])
+        sys.stdout.write('%s -s <WIZ750SR ip address>  -c <server count>\r\n)' % sys.argv[0])
         sys.exit(0)
 
     sys.stdout.write('%r\r\n' % opts)
@@ -229,7 +234,7 @@ if __name__ == '__main__':
         for opt, arg in opts:
             if opt == '-h':
                 sys.stdout.write('Valid syntax\r\n')
-                sys.stdout.write('%s -s <WIZ107SR ip address>  -c <server count>\r\n' % sys.argv[0])
+                sys.stdout.write('%s -s <WIZ750SR ip address>  -c <server count>\r\n' % sys.argv[0])
                 sys.exit(0)
             elif opt in ("-s", "--sip"):
                 dst_ip = arg
