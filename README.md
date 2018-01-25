@@ -1,32 +1,27 @@
-WIZnet CLI(Command Line Interface) module Configuration Tool for WIZ75X Series.
+# WIZnetTool
+WIZnetTool is module Configuration & Test Tool for WIZ75X Series.
 
-# DEVICES
+# SUPPORT DEVICES
+### WIZ750SR & WIZ750SR-EVB 
 
-## WIZ750SR
 WIZ750SR is WIZnet Serial to Ethernet(S2E) module based on W7500 chip, WIZ107/108SR S2E compatible device. 
-<!-- WIZ750SR pic -->
-<p align="center">
-<img width="80%" src="http://wizwiki.net/wiki/lib/exe/fetch.php?media=products:wiz750sr:wiz750sr_rev1.0_main_1024x693.png" />
-</p>
 
-## WIZ750SR-EVB
 WIZ750SR-EVB is evaluation board for WIZ750SR.
+  - [WIZ750SR WIKI page](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
+  - [WIZ750SR Github](https://github.com/Wiznet/WIZ750SR)
 
-<!-- WIZ750SR EVB pic -->
-<p align="center">
-  <img width="70%" src="http://wizwiki.net/wiki/lib/exe/fetch.php?media=products:wiz750sr:gettingstarted:wiz750sr-ttl-evb_1_1024x816.png" />
-</p>
-
-For more detail, refer below links.
-- [WIZ750SR WIKI page](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
-- [WIZ750SR Product page](http://www.wiznet.io/product-item/wiz750sr/)
-- [WIZ750SR Github](WIZhttps://github.com/Wiznet/WIZ750SR)
-
-<!-- ## WIZ752SR
-WIZ752SR is two port S2E device. for more detail, refer below links. -->
+### WIZ752SR
+WIZ752SR is WIZnet Serial to Ethernet(S2E) module and supported 2 serial port.
 
 
 # CONFIGURATION TOOL
+- [CLI Configuration Tool](#CLI-Configuration-Tool)
+- GLI Configuration Tool (Not suppoted yet)
+<!-- - [GUI Configuration Tool (Not suppoted yet)](#GUI-Configuration-Tool) -->
+
+
+## CLI Configuration Tool
+
 ## Pre-Required
 ### Check Python version
 WIZnetTool works on Python version 2.7.X. Before use this, check the version as follow.
@@ -63,7 +58,7 @@ And then **mac_list.txt** is created, there are MAC address information of each 
 
 
 ### Firmware Upload
-When do device's firmware upload, need TCP connection with devices to send Firmware file. So first, use **-m/--multiset** option for set ip address to the same network band as host.
+When do device's firmware upload, need TCP connection with devices to send Firmware file. So first, use **-m/--multiset** option for set ip address to the same network-band as host.
 
     python wiz750_configTool.py -m <IP address>
 
@@ -110,6 +105,17 @@ Then, config deivce use --setfile option.
 You can see this description as following command.
 
     $ python wiz750_configTool.py -h
+
+When config serial port, refer below.
+- One port S2E devices
+    - WIZ750SR Series
+    - Use **UART #0 Configurations**
+- Two port S2E devices
+    - WIZ752SR Series
+    - Use **UART #0 Configurations** & **UART #1 Configurations** both.
+
+And all other options are common.
+    
 <pre><code>optional arguments:
   -h, --help            show this help message and exit
   -d MACADDR, --device MACADDR
@@ -138,7 +144,7 @@ Network Configuration:
   --rport PORT          Remote host port number
 
 UART #0 Configurations:
-  --baud0 BAUD0         baue rate (300 to 230400)
+  --baud0 BAUD0         baud rate (300 to 230400)
   --data0 {0,1}         data bit (0: 7-bit, 1: 8-bit)
   --parity0 {0,1,2}     parity bit (0: NONE, 1: ODD, 2: EVEN)
   --stop0 {0,1}         stop bit (0: 1-bit, 1: 2-bit)
@@ -146,18 +152,6 @@ UART #0 Configurations:
   --time0 TIME0         Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))
   --size0 SIZE0         Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))
   --char0 CHAR0         Designated character delimiter (00: Not use / Other: Designated character)
-
-UART #1 Configurations:
-  --baud1 BAUD1         baue rate (300 to 230400)
-  --data1 {0,1}         data bit (0: 7-bit, 1: 8-bit)
-  --parity1 {0,1,2}     parity bit (0: NONE, 1: ODD, 2: EVEN)
-  --stop1 {0,1}         stop bit (0: 1-bit, 1: 2-bit)
-  --flow1 {0,1,2}       flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)
-  --time1 TIME1         Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))
-  --size1 SIZE1         Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))
-  --char1 CHAR1         Designated character delimiter (00: Not use / Other: Designated character)
-
-UART #0 Options:
   --it timer            Inactivity timer value for TCP connection close
                         when there is no data exchange (0: Not use / 1~65535: timer value)
   --ka {0,1}            Keep-alive packet transmit enable for checking TCP connection established
@@ -168,7 +162,15 @@ UART #0 Options:
   --ri number           TCP client reconnection interval value [TCP client only]
                         (0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))
 
-UART #1 Options:
+UART #1 Configurations:
+  --baud1 BAUD1         baud rate (300 to 230400)
+  --data1 {0,1}         data bit (0: 7-bit, 1: 8-bit)
+  --parity1 {0,1,2}     parity bit (0: NONE, 1: ODD, 2: EVEN)
+  --stop1 {0,1}         stop bit (0: 1-bit, 1: 2-bit)
+  --flow1 {0,1,2}       flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)
+  --time1 TIME1         Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))
+  --size1 SIZE1         Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))
+  --char1 CHAR1         Designated character delimiter (00: Not use / Other: Designated character)
   --rv timer            Inactivity timer value for TCP connection close
                         when there is no data exchange (0: Not use / 1~65535: timer value)
   --ra {0,1}            Keep-alive packet transmit enable for checking TCP connection established
@@ -191,17 +193,17 @@ UART Command mode switch settings:
 
 Configuration from File:
   --setfile SETFILE     File name to Set
-  --getfile GETFILE     File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).
+  --getfile GETFILE     File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).</code></pre>
 
-Set IP address for multi devices:
-  -m ipaddr, --multiset ipaddr
-                        Set IP address for all device in 'mac_list.txt'. Parameter is first address.</code></pre>
+## GUI Configuration Tool
+_GUI Configuration Tool is not supported yet. It will be updated soon._
 
-# MUTIPLE LOOPBACK TEST
 
-This tool perform simple loopback test for functional verification of WIZ75XSR devices.
+# LOOPBACK TEST
 
-For use this on WIZ750SR-EVB, The TX-RX of serial connector must be connected (use jumper connector).
+This tool is perform simple loopback test for functional verification of WIZ75XSR devices.
+
+For use this, The **TX-RX pin(of serial connector) must be connected** (use jumper connector).
 
 ## Usage
     $ python wiz75x_loopback_test.py -h
@@ -211,11 +213,15 @@ For use this on WIZ750SR-EVB, The TX-RX of serial connector must be connected (u
   -t TARGETIP, --targetip TARGETIP   Target IP address
   -r RETRY, --retry RETRY            Test retry number (default: 5)</code></pre>
 
-## Loopback test
-Targetip option is for set ip address to the same network band as host.
+-t/--targetip option is for set IP address to the same network-band as host.
 
-    $ python wiz75x_loopback_test.py -s 1 -t 192.168.X.X
+- One port device
+
+      $ python wiz75x_loopback_test.py -s 1 -t 192.168.X.X
+- two port device
+
+      $ python wiz75x_loopback_test.py -s 2 -t 192.168.X.X
 
 
-
-
+# FAQ
+If you have any problems, please visit [WIZnet Forum](#https://forum.wiznet.io/).
