@@ -70,9 +70,9 @@ class WIZArgParser:
         group.add_argument('--rip', metavar='IP', help='Remote host IP address / Domain')
         group.add_argument('--rport', metavar='PORT', help='Remote host port number')
 
-        ## UART 0 config
+        ## UART 0 Options
         group = parser.add_argument_group('UART #0 Configurations')
-        group.add_argument('--baud0', type=int, help='''baud rate (300 to 230400)''')
+        group.add_argument('--baud0', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)')
         group.add_argument('--data0', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity0', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
         group.add_argument('--stop0', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')
@@ -80,20 +80,7 @@ class WIZArgParser:
         group.add_argument('--time0', help='Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))')
         group.add_argument('--size0', help='Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))')
         group.add_argument('--char0', help='Designated character delimiter (00: Not use / Other: Designated character)')
-
-        ## UART 1 config
-        group = parser.add_argument_group('UART #1 Configurations')
-        group.add_argument('--baud1', type=int, help='''baud rate (300 to 230400)''')
-        group.add_argument('--data1', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
-        group.add_argument('--parity1', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
-        group.add_argument('--stop1', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')
-        group.add_argument('--flow1', choices=['0','1','2'], help='flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)')
-        group.add_argument('--time1', help='Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))')
-        group.add_argument('--size1', help='Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))')
-        group.add_argument('--char1', help='Designated character delimiter (00: Not use / Other: Designated character)')
-
-        ## UART 0 Options
-        group = parser.add_argument_group('UART #0 Options')
+        
         group.add_argument('--it', metavar='timer', 
                 help='''Inactivity timer value for TCP connection close\nwhen there is no data exchange (0: Not use / 1~65535: timer value)''')
 
@@ -107,7 +94,16 @@ class WIZArgParser:
         # group.add_argument('--ec',  choices=['0','1'], help='UART Echoback function enable (Data UART port)')
 
         ## UART 1 Options
-        group = parser.add_argument_group('UART #1 Options')
+        group = parser.add_argument_group('UART #1 Configurations')
+        group.add_argument('--baud1', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)')
+        group.add_argument('--data1', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
+        group.add_argument('--parity1', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
+        group.add_argument('--stop1', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')
+        group.add_argument('--flow1', choices=['0','1','2'], help='flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)')
+        group.add_argument('--time1', help='Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))')
+        group.add_argument('--size1', help='Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))')
+        group.add_argument('--char1', help='Designated character delimiter (00: Not use / Other: Designated character)')
+        
         group.add_argument('--rv', metavar='timer', 
                 help='''Inactivity timer value for TCP connection close\nwhen there is no data exchange (0: Not use / 1~65535: timer value)''')
         group.add_argument('--ra', choices=['0','1'], help='Keep-alive packet transmit enable for checking TCP connection established')
@@ -118,6 +114,10 @@ class WIZArgParser:
         group.add_argument('--rr', metavar='number', 
                 help='''TCP client reconnection interval value [TCP client only]\n(0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))''')
         
+        ## Command mode switch settings
+        group = parser.add_argument_group('UART Command mode switch settings')
+        group.add_argument('--te', choices=['0','1'], help='Serial command mode switch code enable')
+        group.add_argument('--ss', metavar='3-byte hex', help='Serial command mode switch code (default: 2B2B2B)')
 
         ## Configs
         group = parser.add_argument_group('Configs')
@@ -125,11 +125,6 @@ class WIZArgParser:
         group.add_argument('--np', metavar='pw', help='TCP connection password (string, up to 8 bytes / default: None) [TCP server mode only]')
         group.add_argument('--sp', metavar='value', help='Search identification code (string, up to 8 bytes / default: None)')
         group.add_argument('--dg', choices=['0','1'], help='Serial debug message enable (Debug UART port)')
-
-        ## Command mode switch settings
-        group = parser.add_argument_group('UART Command mode switch settings')
-        group.add_argument('--te', choices=['0','1'], help='Serial command mode switch code enable')
-        group.add_argument('--ss', metavar='3-byte hex', help='Serial command mode switch code (default: 2B2B2B)')
 
         ## Config from file
         group = parser.add_argument_group('\nConfiguration from File')

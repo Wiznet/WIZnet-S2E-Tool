@@ -84,7 +84,8 @@ class WIZ750CMDSET:
                                         {}, "RW"],
                         "EC" : ["Serial Command Echoback Enable", "^[0-1]$", {}, "RW"],
                         "TE" : ["Command mode Switch Code Enable", "^[0-1]$", {}, "RW"],
-                        "SS" : ["Command mode Switch Code", "^([0-7][0-9a-fA-F]{3})$", {}, "RW"],
+                        "SS" : ["Command mode Switch Code", "^(([0-7][0-9a-fA-F]){3})$", {}, "RW"],
+                        # "SS" : ["Command mode Switch Code", "^([0-7][0-9a-fA-F]{3})$", {}, "RW"],
                         "EX" : ["Command mode exit", "", {}, "WO"],
                         "SV" : ["Save Device Setting", "", {}, "WO"],
                         "RT" : ["Device Reboot", "", {}, "WO"],
@@ -172,12 +173,12 @@ if __name__ == '__main__':
     # print(cmdlist[cmd_index][0])   
 
     # 각 command에 대한 정보 출력 => log 기록 시 활용
-    cmd = 'BR'
+    cmd = 'SS'
     print('\"%s\": %s\n %s\n' %(cmd, cmdsetObj.cmdset[cmd][0], cmdsetObj.cmdset[cmd][2]))
 
     # 함수 활용
     print(cmdsetObj.getcmddescription(cmd))
-    print(cmdsetObj.getparamdescription(cmd,'10'))
+    print(cmdsetObj.getparamdescription(cmd,'2B2C2D'))
 
     # cmdsetObj.isvalidparameter("MC", "00:08:dc:11:22:33")
     # cmdsetObj.isvalidparameter("MC", "00:08:dc:11:22:34")

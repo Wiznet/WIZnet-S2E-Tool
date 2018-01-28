@@ -33,7 +33,7 @@ def timeout_func():
 class WIZMSGHandler:
     def __init__(self, udpsock):
         self.sock = udpsock
-        self.msg = bytearray(512)
+        self.msg = bytearray(1024)
         self.size = 0
 
         self.inputs = [self.sock.sock]
@@ -137,14 +137,15 @@ class WIZMSGHandler:
 
     def parseresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
-
+        
         self.timer1 = Timer(2.0, self.timeout_func)
         self.timer1.start()
         
         # t = Timer(3.0, timeout_func)
         # t.start()
-
+        
         replylists = None
+        self.getreply = []
 
         while True:
             self.iter += 1
@@ -152,16 +153,16 @@ class WIZMSGHandler:
 
             if self.istimeout is True:
                 self.timer1.cancel()
+                self.istimeout = False
                 break
 
             # if(exitflag) :
             #     t.cancel()
             #     # exitflag = 0
-
+            
             for sock in readready:
                 if sock == self.sock.sock :
                     data = self.sock.recvfrom()
-                    # 보낸 command에 대한 응답 파싱 (디바이스 1대 당 한 줄)
                     replylists = data.splitlines()
                     # print('replylists', replylists)
                     self.getreply = replylists
@@ -188,9 +189,9 @@ class WIZMSGHandler:
                             if 'IM' in replylists[i]:
                                 self.ip_mode.append(replylists[i][2:])
                     elif self.opcode is OP_GETCOMMAND:
-                        print('===>> Get command')
-                        for i in range(0, len(replylists)):
-                            sys.stdout.write("%r\r\n" % replylists[i])
+                        pass
+                        # for i in range(0, len(replylists)):
+                        #     sys.stdout.write("%r\r\n" % replylists[i])
 
                     elif self.opcode is OP_SETCOMMAND:
                         pass
@@ -204,7 +205,6 @@ class WIZMSGHandler:
 
                     elif self.opcode is OP_GETFILE:
                         pass
-                        # self.getfile()
                         # for i in range(0, len(replylists)):
                         #     sys.stdout.write("%r\r\n" % replylists[i])
                         
@@ -239,41 +239,42 @@ class WIZMSGHandler:
         # sys.stdout.write("%s\r\n" % self.mac_list)
 
     def get_log(self):
-        for i in range(0, len(self.getreply)):
-            if 'MC' in self.getreply[i]:
-                sys.stdout.write("<MC> Mac address: %r\r\n" % (self.getreply[i][2:]))
-            if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
-                sys.stdout.write("<MN> Product name: %r\r\n" % (self.getreply[i][2:]))
-            if 'VR' in self.getreply[i]:
-                sys.stdout.write("<VR> Version: %r\r\n" % (self.getreply[i][2:]))
-            if 'OP' in self.getreply[i]:
-                sys.stdout.write("<OP> Operation Mode: %r\r\n" % (self.getreply[i][2:]))
-            if 'LI' in self.getreply[i]:
-                sys.stdout.write("<LI> IP address: %r\r\n" % (self.getreply[i][2:]))
+        print('Configuration result: ')
+        # print('getreply: %s' % self.getreply)
+        cmdsetObj = WIZ752CMDSET(logging.ERROR)
+        for i in range(2, len(self.getreply)):
+            cmd = self.getreply[i][:2]
+            param = self.getreply[i][2:]
+            cmd_desc = cmdsetObj.getcmddescription(cmd)
+            param_desc = cmdsetObj.getparamdescription(cmd, param)
+            conf_info = "    %02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
+            sys.stdout.write('%s' % conf_info)
 
-    def get_filelog(self, mac_addr):
+    def get_filelog(self, macaddr):
+        filename = None
         # print('getreply: %s' % self.getreply)
         if self.getreply is None:
             print('No reply from device. exit program.')
             sys.exit(0)
 
+        mac_addr = macaddr.replace(":", "")
         for i in range(0, len(self.getreply)):
             if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
                 cmdsetObj = WIZ752CMDSET(logging.ERROR)
-                filename = 'get_detail_2port.txt'
-                # filename = 'get_detail_2port_' + mac_addr + '.txt'
+                filename = 'get_detail_2port_%s.txt' % (mac_addr)
                 # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
             elif 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ750SR':
                 cmdsetObj = WIZ750CMDSET(logging.ERROR)
-                filename = 'get_detail_1port.txt'
-                # filename = 'get_detail_1port.txt_' + mac_addr + '.txt'
+                filename = 'get_detail_1port_%s.txt' % (mac_addr)
                 # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
-        
+
         for i in range(0, len(self.getreply)):
-            # f = open('get_cmd_detail.txt', 'w')
             f = open(filename, 'w')
             for i in range(2, len(self.getreply)):
                 cmd = self.getreply[i][:2]
+                if cmd not in cmdsetObj.cmdset:
+                    print('Invalid command. Check the command set')
+                    exit(0)
                 param = self.getreply[i][2:]
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
@@ -282,8 +283,10 @@ class WIZMSGHandler:
                 # info = "%02d) %s: %s\r\n" % (i-1, cmd_desc, param_desc)
                 f.write(info)
             f.close()
-        f = open(filename, 'r')
-        readinfo = f.read()
-        print(readinfo)       
         
-        print('@ Refer to \"%s\" for detail.\n' % filename)
+        if filename is not None:
+            f = open(filename, 'r')
+            readinfo = f.read()
+            print(readinfo)       
+            
+            print('@ Refer to \"%s\" for detail.\n' % filename)

@@ -95,7 +95,6 @@ class TCPClientThread(threading.Thread):
         # self.f = fd
         try:
             while True:
-
                 if self.client.state is SOCK_CLOSE_STATE:
                     if self.timer1 is not None:
                         self.timer1.cancel()
@@ -200,8 +199,9 @@ class TCPClientThread(threading.Thread):
                     #     sys.stdout.write('[%r] is CLOSED\r\n' % (self.serverip))
                     # time.sleep(2)
 
-        except:
-            pass
+        except(KeyboardInterrupt, SystemExit):
+            sys.stdout.write('Keyboard interrupt occured!')
+            sys.exit(0)
         finally:
             self.stop()
 

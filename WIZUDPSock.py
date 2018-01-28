@@ -24,7 +24,7 @@ class WIZUDPSock:
 		self.sock.sendto(msg, ("255.255.255.255", self.peerport))		
 		
 	def recvfrom(self):
-		data, addr = self.sock.recvfrom(512)
+		data, addr = self.sock.recvfrom(2048)
 		return data
 		
 	def close(self):
