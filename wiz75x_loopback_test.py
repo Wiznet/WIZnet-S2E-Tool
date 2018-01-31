@@ -12,7 +12,7 @@ from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from TCPClientThread import TCPClientThread
 from WIZArgParser import WIZArgParser
-from wiz750_configTool import WIZMakeCMD
+from wizconfig import WIZMakeCMD
 
 OP_SEARCHALL = 1
 OP_SETIP = 2

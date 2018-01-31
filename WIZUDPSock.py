@@ -6,7 +6,9 @@ import struct
 import binascii
 import select
 import sys
+import threading
 
+# for command set/get
 class WIZUDPSock:
 	def __init__(self, port, peerport):
 		self.sock = None

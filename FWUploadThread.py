@@ -3,7 +3,7 @@
 import re
 import sys
 
-sys.path.append('./TCPClient/')
+# sys.path.append('./TCPClient/')
 import io
 import time
 import logging
@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 from WIZMSGHandler import WIZMSGHandler
 from WIZUDPSock import WIZUDPSock
-from TCPClient import TCPClient
+from wizsocket.TCPClient import TCPClient
 
 OP_SEARCHALL = 1
 OP_SETIP = 2
@@ -32,9 +32,12 @@ SOCK_CONNECT_STATE = 5
 idle_state = 1
 datasent_state = 2
 
-class FWUpload:
+class FWUploadThread(threading.Thread):
     # initialization
-    def __init__(self, log_level):
+    # def __init__(self, log_level):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
         self.dest_mac = None
         self.bin_filename = None
         self.fd = None
@@ -45,7 +48,6 @@ class FWUpload:
         self.serverip = None
         self.serverport = None
 
-
     def setparam(self, dest_mac, binaryfile):
         self.dest_mac = dest_mac
         self.bin_filename = binaryfile
@@ -54,7 +56,7 @@ class FWUpload:
         self.remainbytes = len(self.data)
         self.curr_ptr = 0
 
-        sys.stdout.write("File Size: %r\r\n" % len(self.data))
+        sys.stdout.write("Firmware file size: %r\n\n" % len(self.data))
 
     def myTimer(self):
         # sys.stdout.write('timer1 timeout\r\n')
@@ -124,14 +126,15 @@ class FWUpload:
                                     msg = bytearray(1024)
                                     msg[:] = self.data[self.curr_ptr:self.curr_ptr+1024]
                                     self.client.write(msg)
-                                    sys.stdout.write('1024 bytes sent from at %r\r\n' % (self.curr_ptr))
+                                    # sys.stdout.write('1024 bytes sent from at %r\r\n' % (self.curr_ptr))
                                     self.curr_ptr += 1024
                                     self.remainbytes -= 1024
                                 else :
                                     msg = bytearray(self.remainbytes)
                                     msg[:] = self.data[self.curr_ptr:self.curr_ptr+self.remainbytes]
                                     self.client.write(msg)
-                                    sys.stdout.write('%r byte sent from at %r \r\n' % (self.remainbytes, self.curr_ptr))
+                                    sys.stdout.write('...\nLast %r byte sent from at %r \r\n' % (self.remainbytes, self.curr_ptr))
+                                    sys.stdout.write('Device [%s] firmware upload success!\r\n' % (self.dest_mac))
                                     self.curr_ptr += self.remainbytes
                                     self.remainbytes = 0
 
@@ -161,7 +164,6 @@ class FWUpload:
 
                         response = ""
                     break
-
         except:
             pass
         finally:

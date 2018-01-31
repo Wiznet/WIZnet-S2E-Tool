@@ -51,10 +51,10 @@ Next, you have to install **pySerial** module as follow.
 If you want more detail, refer to https://github.com/pyserial/pyserial
 
 ### Usage
-    $ python wiz750_configTool.py [Options ...]
+    $ python wizconfig.py [Options ...]
 You can see detail description as following command.
 
-    $ python wiz750_configTool.py -h
+    $ python wizconfig.py -h
 
 When config the serial port, refer below.
 
@@ -65,41 +65,59 @@ When config the serial port, refer below.
     - WIZ752SR Series
     - Use **UART #0 Configurations** & **UART #1 Configurations** both.
 
-And all other options are common.
+And all other options are common for 1 port & 2 port S2E devices.
 
 #### 1. Search Devices
 First, you could search devices use '-s' or '--search' option. 
 
-    $ python wiz750_configTool.py -s
+    $ python wizconfig.py -s
 And then **mac_list.txt** is created, there are MAC address information of each devices.
 
 #### 2. Configuration
 * Single Device
 
-      $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX [Options ...]
-
+      $ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]
+    
 * All Devices
 
-      $ python wiz750_configTool.py -a [Options ...]
+      $ python wizconfig.py -a [Options ...]
+    
+* Set example
+
+    Set baud rate to 115200 of 1 port S2E device.
+
+    If device's mac address is '00:08:DC:AA:BB:CC', you can set like this.
+
+        $ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200 
+
+    If you want to set baud rate for all devices on the network, do like this.
+
+        $ python wizconfig.py -a --baud0 115200 
+
 
 #### 3. Firmware Upload
+
+##### Step 1 - Set IP address
 When do device's firmware upload, need TCP connection with devices to send Firmware file. 
-So first, use **-m/--multiset** option for set ip address to the same network-band as host.
 
-    $ python wiz750_configTool.py -m <IP address>
+So first, use **-m/--multiset** option for **set ip address to the same network-band as host**.
 
-And you must use **App part firmware** file when do this. To download firmware file, refer to below.
+    $ python wizconfig.py -m <IP address>
 
+##### Step 2 - Firmware upload
+Next, prepare the fireware file. You must use **App part firmware** file when do this. 
+
+To download firmware file, visit below link.
 - https://github.com/Wiznet/WIZ750SR/releases
 - https://github.com/Wiznet/WIZ750SR/tree/master/Projects/S2E_App/bin
 
-* Single devcie
+* Single device
 
-      $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX -u <F/W file path>
+      $ python wizconfig.py -d 00:08:DC:XX:XX:XX -u <F/W file path>
 
 * All device
 
-      $ python wiz750_configTool.py -a -u <F/W file path>
+      $ python wizconfig.py -a -u <F/W file path>
 
 #### 4. Get/Set configs Use File
 
@@ -108,15 +126,23 @@ You can check all configuration information of the device use --getfile option.
 
 You can use example files named **cmd_oneport.txt** and **cmd_twoport.txt**.
 
-* Single devcie
+* Single device
 
-      $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX --getfile <file_name>
+      // One port devices
+      $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_oneport.txt
 
-* ALL devcie
+      // Two port devices
+      $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_twoport.txt
 
-      $ python wiz750_configTool.py -a --getfile <file_name>
+* ALL devices
 
-Then log files will be created that containing device information.
+      // One port devices
+      $ python wizconfig.py -a --getfile cmd_oneport.txt
+
+      // Two port devices
+      $ python wizconfig.py -a --getfile cmd_twoport.txt
+
+It will create log file named **getfile_0008DCXXXXXX.log** that contains information about the device.
 
 ##### Setfile
 You can save the settings you want to keep to a file and set them with the --setfile option. It can be used as macro.
@@ -133,13 +159,13 @@ BR12</pre></code>
 
 Then, config deivce use --setfile option.
 
-* Single devcie
+* Single device
 
-      $ python wiz750_configTool.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt
+      $ python wizconfig.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt
 
-* ALL devcie
+* ALL devices
 
-      $ python wiz750_configTool.py -a --setfile set_cmd.txt
+      $ python wizconfig.py -a --setfile set_cmd.txt
 
 
     

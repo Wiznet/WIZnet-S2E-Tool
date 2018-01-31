@@ -51,6 +51,7 @@ class WIZMSGHandler:
         self.ip_list = []
         self.ip_mode = []
         self.mode_list = []
+        self.devname = []
 
         self.getreply = []
 
@@ -81,6 +82,15 @@ class WIZMSGHandler:
             return ip_addr
         else:
             print('getipaddr: index is out of range')
+            return None
+    
+    def getdevname(self, index):
+        if len(self.devname) >= (index + 1):
+            devname = self.devname[index]
+            print('devname:' + devname)
+            return devname
+        else:
+            print('getdevname: index is out of range')
             return None
 
     def getopmode(self, index):
@@ -133,7 +143,6 @@ class WIZMSGHandler:
 
     def sendcommands(self):
         self.sock.sendto(self.msg)
-        # print(self.msg)
 
     def parseresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
@@ -172,6 +181,9 @@ class WIZMSGHandler:
                             if 'MC' in replylists[i] :
                                 self.mac_list.append(replylists[i][2:])
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
+                            if 'MN' in replylists[i]:
+                                self.devname.append(replylists[i][2:])
+                                #  sys.stdout.write("Device name: %r\r\n" % (replylists[i][2:]))
                             # if 'MN' in replylists[i] and "WIZ752SR-12x" not in replylists[i][2:] :
                             # if 'MN' in replylists[i] and "WIZ750SR" not in replylists[i][2:] :
                             #     self.mac_list.pop()
@@ -239,16 +251,17 @@ class WIZMSGHandler:
         # sys.stdout.write("%s\r\n" % self.mac_list)
 
     def get_log(self):
-        print('Configuration result: ')
-        # print('getreply: %s' % self.getreply)
-        cmdsetObj = WIZ752CMDSET(logging.ERROR)
-        for i in range(2, len(self.getreply)):
-            cmd = self.getreply[i][:2]
-            param = self.getreply[i][2:]
-            cmd_desc = cmdsetObj.getcmddescription(cmd)
-            param_desc = cmdsetObj.getparamdescription(cmd, param)
-            conf_info = "    %02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
-            sys.stdout.write('%s' % conf_info)
+        if len(self.getreply) > 0:        
+            print('Configuration result: ')
+            # print('getreply: %s' % self.getreply)
+            cmdsetObj = WIZ752CMDSET(logging.ERROR)
+            for i in range(2, len(self.getreply)):
+                cmd = self.getreply[i][:2]
+                param = self.getreply[i][2:]
+                cmd_desc = cmdsetObj.getcmddescription(cmd)
+                param_desc = cmdsetObj.getparamdescription(cmd, param)
+                conf_info = "    %02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
+                sys.stdout.write('%s' % conf_info)
 
     def get_filelog(self, macaddr):
         filename = None
@@ -259,14 +272,18 @@ class WIZMSGHandler:
 
         mac_addr = macaddr.replace(":", "")
         for i in range(0, len(self.getreply)):
-            if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
+            if 'MN' in self.getreply[i]:
                 cmdsetObj = WIZ752CMDSET(logging.ERROR)
-                filename = 'get_detail_2port_%s.txt' % (mac_addr)
-                # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
-            elif 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ750SR':
-                cmdsetObj = WIZ750CMDSET(logging.ERROR)
-                filename = 'get_detail_1port_%s.txt' % (mac_addr)
-                # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
+                filename = 'getfile_%s.log' % (mac_addr)
+            
+            # if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
+            #     cmdsetObj = WIZ752CMDSET(logging.ERROR)
+            #     filename = 'get_detail_2port_%s.txt' % (mac_addr)
+            #     # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
+            # elif 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ750SR':
+            #     cmdsetObj = WIZ750CMDSET(logging.ERROR)
+            #     filename = 'get_detail_1port_%s.txt' % (mac_addr)
+            #     # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
 
         for i in range(0, len(self.getreply)):
             f = open(filename, 'w')
@@ -279,7 +296,7 @@ class WIZMSGHandler:
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
                 # sys.stdout.write("%s\r\n" % self.getreply[i])
-                info = "%02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
+                info = "%02d) %s: %-17s | %s: %s\n" % (i-1, cmd, param, cmd_desc, param_desc)
                 # info = "%02d) %s: %s\r\n" % (i-1, cmd_desc, param_desc)
                 f.write(info)
             f.close()

@@ -5,14 +5,14 @@
 
 import sys
 
-sys.path.append('./TCPClient/')
+# sys.path.append('./TCPClient/')
 import time
 import socket
 import getopt
 import threading
 # import thread
 
-from TCPClient import TCPClient
+from wizsocket.TCPClient import TCPClient
 from time import gmtime, strftime, localtime
 
 msg = "Hello WIZ750SR\r"

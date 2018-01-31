@@ -5,7 +5,7 @@
 
 import sys
 
-sys.path.append('./TCPClient/')
+# sys.path.append('./TCPClient/')
 import time
 import socket
 import getopt
@@ -13,7 +13,7 @@ import threading
 # import thread
 import errno
 
-from TCPServer import TCPServer
+from wizsocket.TCPServer import TCPServer
 from time import gmtime, strftime, localtime
 
 from TCPClientThread import msg
@@ -161,7 +161,7 @@ class TCPServerThread(threading.Thread):
 
                 elif self.server.working_state == datasent_state:
                     # sys.stdout.write('4 : %r' % self.server.getsockstate())
-                    time.sleep(2)
+                    time.sleep(1.7)
                     response = self.server.readline()
                     # print('===> TCP reponse', response)
                     if (response != ""):
@@ -205,14 +205,14 @@ if __name__ == '__main__':
 
     if len(sys.argv) <= 4:
         sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('%s -s <WIZ107SR ip address> -c <server count>\r\n)' % sys.argv[0])
+        sys.stdout.write('TCPClientThreadNew.py -s <WIZ107SR ip address> -c <server count>\r\n)')
         sys.exit(0)
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:c:r:")
     except getopt.GetoptError:
         sys.stdout.write('Invalid syntax. Refer to below\r\n')
-        sys.stdout.write('%s -s <WIZ107SR ip address>  -c <server count>\r\n)' % sys.argv[0])
+        sys.stdout.write('TCPClientThreadNew.py -s <WIZ107SR ip address>  -c <server count>\r\n)')
         sys.exit(0)
 
     sys.stdout.write('%r\r\n' % opts)
@@ -223,7 +223,7 @@ if __name__ == '__main__':
         for opt, arg in opts:
             if opt == '-h':
                 sys.stdout.write('Valid syntax\r\n')
-                sys.stdout.write('%s -s <WIZ107SR ip address>  -c <server count>\r\n' % sys.argv[0])
+                sys.stdout.write('TCPClientThreadNew.py -s <WIZ107SR ip address>  -c <server count>\r\n')
                 sys.exit(0)
             elif opt in ("-s", "--sip"):
                 dst_ip = arg
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     # fd = open(filename, 'w')
 
         for i in range(dst_num):
-            t = TCPClientThread(dst_ip[:lastnumindex + 1] + str(lastnum + i), dst_port, retrycount)
+            t = TCPClientThreadNew(dst_ip[:lastnumindex + 1] + str(lastnum + i), dst_port, retrycount)
             threads.append(t)
 
         for i in range(dst_num):
@@ -257,6 +257,7 @@ if __name__ == '__main__':
                 end_flag &= not threads[i].is_alive()
 
     except (KeyboardInterrupt, SystemExit):
+        sys.stdout.write('--------> Keyboard interrupt 33!!\r\n')
         for i in range(dst_num):
             threads[i].stop()
     # finally:

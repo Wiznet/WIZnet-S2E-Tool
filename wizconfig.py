@@ -17,7 +17,7 @@ from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
-from FWUpload import FWUpload
+from FWUploadThread import FWUploadThread
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -87,6 +87,7 @@ class WIZMakeCMD:
         # cmd_list.append(["MC", ""])
         for i in range(len(command_list)):
             cmd_list.append([command_list[i], ""]) 
+        # cmd_list.append(["RT", ""])
         return cmd_list
 
     # Set device
@@ -118,7 +119,7 @@ class WIZMakeCMD:
         cmd_list.append(["FR", ""])	
         return cmd_list
     
-    def set_maclist(self, mac_list):
+    def set_maclist(self, mac_list, devname):
         try:
             if os.path.isfile('mac_list.txt'):
                 f = open('mac_list.txt', 'a+')
@@ -129,8 +130,8 @@ class WIZMakeCMD:
             sys.stdout.write(e)
         # print('data', data)
         for i in range(len(mac_list)):
-            print('* Device %d: %s' % (i+1, mac_list[i]))
-            info = "%s\r\n" % (mac_list[i])            
+            print('* Device %d: %s [%s] ' % (i+1, mac_list[i], devname[i]))
+            info = "%s\n" % (mac_list[i])            
             if info in data:
                 # print('===> already in')
                 pass
@@ -148,13 +149,14 @@ if __name__ == '__main__':
     wizarg = WIZArgParser()
     args = wizarg.config_arg()
 
-    wiz750cmdObj = WIZ750CMDSET(1)
+    # wiz750cmdObj = WIZ750CMDSET(1)
+    wiz752cmdObj = WIZ752CMDSET(1)
 
     conf_sock = WIZUDPSock(5000, 50001)
     conf_sock.open()
     wizmsghangler = WIZMSGHandler(conf_sock)
 
-    FUObj = FWUpload(logging.DEBUG)
+    # FUObj = FWUpload(logging.DEBUG)
 
     cmd_list = []
     setcmd = {}
@@ -179,7 +181,7 @@ if __name__ == '__main__':
     elif args.macaddr or args.all or args.search or args.multiset:
         if args.macaddr:
             mac_addr = args.macaddr
-            if wiz750cmdObj.isvalidparameter("MC", mac_addr) is False :
+            if wiz752cmdObj.isvalidparameter("MC", mac_addr) is False :
                 sys.stdout.write("Invalid Mac address!\r\n")
                 sys.exit(0)
         
@@ -242,9 +244,9 @@ if __name__ == '__main__':
         # Check parameter
         setcmd_cmd = list(setcmd.keys())
         for i in range(len(setcmd)):
-            # print('%s , %s' % (setcmd_cmd[i], setcmd.get(setcmd_cmd[i])))
-            if wiz750cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) is False:
-                sys.stdout.write("Invalid parameter: %s \nPlease refer to %s -h\r\n" % (setcmd.get(setcmd_cmd[i]), sys.argv[0]))
+            # print('%r , %r' % (setcmd_cmd[i], setcmd.get(setcmd_cmd[i])))
+            if wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) is False:
+                sys.stdout.write("%s\nInvalid parameter: %s \nPlease refer to %s -h\r\n" % ('#'*25, setcmd.get(setcmd_cmd[i]), sys.argv[0]))
                 sys.exit(0)
         ######################################################
         # ALL devices config
@@ -259,7 +261,7 @@ if __name__ == '__main__':
             if args.multiset:
                 host_ip = args.multiset
                 # print('Host ip: %s\n' % host_ip)
-                if wiz750cmdObj.isvalidparameter("LI", host_ip) is False:
+                if wiz752cmdObj.isvalidparameter("LI", host_ip) is False:
                     sys.stdout.write("Invalid IP address!\r\n")
                     sys.exit(0)
             
@@ -267,10 +269,17 @@ if __name__ == '__main__':
                 mac_addr = re.sub('[\r\n]', '', mac_list[i])
                 if args.fwfile:
                     op_code = OP_FWUP
-                    print('[All] Device FW upload: device %d, %s\r\n' % (i+1, mac_addr))
-                    FUObj.setparam(mac_addr, args.fwfile)
-                    FUObj.run()
-                    time.sleep(1)
+                    print('[All] Device FW upload: device %d, %s' % (i+1, mac_addr))
+
+                    ## no thread
+                    # FUObj.setparam(mac_addr, args.fwfile)
+                    # FUObj.run()
+                    # time.sleep(1)
+                    ## threading
+                    fwup_name = 't%d_fwup' % (i)
+                    fwup_name = FWUploadThread()
+                    fwup_name.setparam(mac_addr, args.fwfile)
+                    fwup_name.start()
                 else: 
                     if args.multiset:
                         op_code = OP_SETCOMMAND
@@ -310,7 +319,9 @@ if __name__ == '__main__':
                     # print('<ALL> op_code %d, cmd_list: %s\n' % (op_code, cmd_list))
                     wizmsghangler.makecommands(cmd_list, op_code)
                     wizmsghangler.sendcommands()
-                    wizmsghangler.parseresponse()
+                    # Set 명령 시 응답 처리 불필요
+                    if not args.multiset:
+                        wizmsghangler.parseresponse()
                     if args.getfile:
                         print('[All][Getfile] Get device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
                         wizmsghangler.get_filelog(mac_addr)
@@ -354,7 +365,8 @@ if __name__ == '__main__':
             # print(get_cmd_list)
                     
         if args.all or args.multiset:
-            print('\nDevice configuration complete!')
+            if not args.fwfile:
+                print('\nDevice configuration complete!')
         else:
             # print('<SINGLE> op_code %d, cmd_list: %s' % (op_code, cmd_list))
             wizmsghangler.makecommands(cmd_list, op_code)
@@ -364,26 +376,26 @@ if __name__ == '__main__':
     if args.search:
         print('\nSearch result: ' + str(devnum) + ' devices are detected')
         # print(wizmsghangler.mac_list)
-        
+        dev_name = wizmsghangler.devname
         mac_list = wizmsghangler.mac_list
-        wizmakecmd.set_maclist(mac_list)
+        wizmakecmd.set_maclist(mac_list, dev_name)
         print('\nRefer to \'mac_list.txt\' file')
     elif not args.all:
         if op_code is OP_GETFILE:
             wizmsghangler.get_filelog(mac_addr)
         elif op_code is OP_SETFILE:
             print('\nDevice configuration from \'%s\' complete!' % args.setfile)
-        elif args.multiset:
+        elif args.multiset or args.factory or args.reset:
             pass
         elif op_code is OP_SETCOMMAND:
             print('\nDevice configuration complete!\n')
 
             # print('get_cmd_list: %s' % get_cmd_list)
-            # wizmsghangler.makecommands(get_cmd_list, OP_GETCOMMAND)
-            # wizmsghangler.sendcommands()
-            # wizmsghangler.parseresponse()
+            wizmsghangler.makecommands(get_cmd_list, OP_GETCOMMAND)
+            wizmsghangler.sendcommands()
+            wizmsghangler.parseresponse()
             
-            # wizmsghangler.get_log()
+            wizmsghangler.get_log()
             
 
         
