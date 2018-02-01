@@ -78,15 +78,15 @@ class FWUploadThread(threading.Thread):
         wizmsghangler.makecommands(cmd_list, OP_FWUP)
         wizmsghangler.sendcommands()
         resp = wizmsghangler.parseresponse()
+        
+        resp = resp.decode('utf-8')
         # print('resp', resp)
-
         params = resp.split(':')
         sys.stdout.write('Dest IP: %r, Dest Port num: %r\r\n' % (params[0], int(params[1])))
         self.serverip = params[0]
         self.serverport = int(params[1])
 
         try:
-
             self.client = TCPClient(2, params[0], int(params[1]))
         except:
             pass

@@ -122,21 +122,21 @@ class WIZMakeCMD:
     def set_maclist(self, mac_list, devname):
         try:
             if os.path.isfile('mac_list.txt'):
-                f = open('mac_list.txt', 'a+')
+                f = open('mac_list.txt', 'r+')
             else:
                 f = open('mac_list.txt', 'w+')
             data = f.readlines()
+            # print('data', data)
         except Exception as e:
             sys.stdout.write(e)
-        # print('data', data)
         for i in range(len(mac_list)):
-            print('* Device %d: %s [%s] ' % (i+1, mac_list[i], devname[i]))
-            info = "%s\n" % (mac_list[i])            
+            print('* Device %d: %s [%s] ' % (i+1, mac_list[i].decode(), devname[i].decode()))
+            info = "%s\n" % (mac_list[i].decode())
             if info in data:
                 # print('===> already in')
                 pass
             else:
-                print('New Device: %s' % mac_list[i])
+                print('New Device: %s' % mac_list[i].decode())
                 f.write(info)
         f.close()
 
@@ -267,6 +267,7 @@ if __name__ == '__main__':
             
             for i in range(len(mac_list)):
                 mac_addr = re.sub('[\r\n]', '', mac_list[i])
+                # print(mac_addr)
                 if args.fwfile:
                     op_code = OP_FWUP
                     print('[All] Device FW upload: device %d, %s' % (i+1, mac_addr))
@@ -294,11 +295,11 @@ if __name__ == '__main__':
                         setcmd['GW'] = target_gw
                         setcmd['LP'] = dst_port
                         setcmd['OP'] = '1'
-                        cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
-                        get_cmd_list = wizmakecmd.getcommand(mac_addr, setcmd.keys())
+                        cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
+                        get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
                     elif args.setfile:
                         op_code = OP_SETFILE
-                        print('[All][Setfile] Device Config from \'%s\' file.' % args.setfile)
+                        print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
                         cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
                     elif args.getfile:
                         op_code = OP_GETFILE
@@ -313,8 +314,8 @@ if __name__ == '__main__':
                         else:
                             op_code = OP_SETCOMMAND
                             print('[All] Setting devcies %d: %s' % (i+1, mac_addr))
-                            cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
-                            get_cmd_list = wizmakecmd.getcommand(mac_addr, setcmd.keys())
+                            cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
+                            get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
 
                     # print('<ALL> op_code %d, cmd_list: %s\n' % (op_code, cmd_list))
                     wizmsghangler.makecommands(cmd_list, op_code)
@@ -338,8 +339,11 @@ if __name__ == '__main__':
             if args.fwfile:
                 op_code = OP_FWUP
                 print('Device %s Firmware upload' % mac_addr)
-                FUObj.setparam(mac_addr, args.fwfile)
-                FUObj.run()
+                # FUObj.setparam(mac_addr, args.fwfile)
+                # FUObj.run()
+                t_fwup = FWUploadThread()
+                t_fwup.setparam(mac_addr, args.fwfile)
+                t_fwup.start()
             elif args.search:
                 op_code = OP_SEARCHALL
                 print('Start to Search devices...')
@@ -360,8 +364,8 @@ if __name__ == '__main__':
                 cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
             else:   
                 print('* Single devcie config: %s' % mac_addr)
-                cmd_list = wizmakecmd.setcommand(mac_addr, setcmd.keys(), setcmd.values())
-                get_cmd_list = wizmakecmd.getcommand(mac_addr, setcmd.keys())
+                cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
+                get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
             # print(get_cmd_list)
                     
         if args.all or args.multiset:

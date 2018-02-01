@@ -9,6 +9,7 @@ import struct
 import binascii
 import select
 import sys
+import codecs
 from WIZ750CMDSET import WIZ750CMDSET 
 from WIZ752CMDSET import WIZ752CMDSET 
 
@@ -123,10 +124,9 @@ class WIZMSGHandler:
                 # sys.stdout.write('cmd[1]: %r\r\n' % cmd[1])
                 cmd[1] = cmd[1].replace(":", "")
                 # print(cmd[1])
-                hex_string = cmd[1].decode('hex')
-                # hex_string = int(str.encode(cmd[1]), 16)
-                # print ("%r" % hex_string)
-                # print (len(cmd[1]))
+                # hex_string = cmd[1].decode('hex')
+                hex_string = codecs.decode(cmd[1], 'hex')
+                
                 self.msg[self.size:] = hex_string
                 self.dest_mac = hex_string
                 # self.dest_mac = (int(cmd[1], 16)).to_bytes(6, byteorder='big') # Hexadecimal string to hexadecimal binary
@@ -178,10 +178,10 @@ class WIZMSGHandler:
 
                     if self.opcode is OP_SEARCHALL:
                         for i in range(0, len(replylists)):
-                            if 'MC' in replylists[i] :
+                            if b'MC' in replylists[i] :
                                 self.mac_list.append(replylists[i][2:])
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if 'MN' in replylists[i]:
+                            if b'MN' in replylists[i]:
                                 self.devname.append(replylists[i][2:])
                                 #  sys.stdout.write("Device name: %r\r\n" % (replylists[i][2:]))
                             # if 'MN' in replylists[i] and "WIZ752SR-12x" not in replylists[i][2:] :
@@ -189,16 +189,16 @@ class WIZMSGHandler:
                             #     self.mac_list.pop()
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
                             # if 'VR' in replylists[i] and "1.0.0" not in replylists[i][2:] :
-                            if 'VR' in replylists[i] and "1.1.2dev" in replylists[i][2:] :
+                            if b'VR' in replylists[i] and b"1.1.2dev" in replylists[i][2:] :
                                 self.mac_list.pop()     
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if 'OP' in replylists[i]:
+                            if b'OP' in replylists[i]:
                                 self.mode_list.append(replylists[i][2:])
-                            if 'LI' in replylists[i]:
+                            if b'LI' in replylists[i]:
                                 self.ip_list.append(replylists[i][2:]) 
                                 # print('ip_list', self.ip_list)
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if 'IM' in replylists[i]:
+                            if b'IM' in replylists[i]:
                                 self.ip_mode.append(replylists[i][2:])
                     elif self.opcode is OP_GETCOMMAND:
                         pass
@@ -224,7 +224,7 @@ class WIZMSGHandler:
                         for i in range(0, len(replylists)):
                             # sys.stdout.write('%s\r\n' % replylists)
                             # sys.stdout.write("%r\r\n" % replylists[i][:2])
-                            if 'MA' in replylists[i][:2]:
+                            if b'MA' in replylists[i][:2]:
                                 dest_mac = self.dest_mac
                                 reply_mac = replylists[i][2:]
                                 # sys.stdout.write('dest_mac: %r\r\n' % dest_mac)
@@ -235,7 +235,7 @@ class WIZMSGHandler:
 
                             # sys.stdout.write("%r\r\n" % replylists[i][:2])
 
-                            if 'FW' in replylists[i][:2]:
+                            if b'FW' in replylists[i][:2]:
                                 # sys.stdout.write('self.isvalid is True\r\n')
                                 param = replylists[i][2:].split(b':')
                                 self.reply = replylists[i][2:]
@@ -256,8 +256,11 @@ class WIZMSGHandler:
             # print('getreply: %s' % self.getreply)
             cmdsetObj = WIZ752CMDSET(logging.ERROR)
             for i in range(2, len(self.getreply)):
-                cmd = self.getreply[i][:2]
-                param = self.getreply[i][2:]
+                getcmd = self.getreply[i][:2]
+                cmd = getcmd.decode('utf-8')
+                getparam = self.getreply[i][2:]
+                param = getparam.decode('utf-8')
+
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
                 conf_info = "    %02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
@@ -272,7 +275,7 @@ class WIZMSGHandler:
 
         mac_addr = macaddr.replace(":", "")
         for i in range(0, len(self.getreply)):
-            if 'MN' in self.getreply[i]:
+            if b'MN' in self.getreply[i]:
                 cmdsetObj = WIZ752CMDSET(logging.ERROR)
                 filename = 'getfile_%s.log' % (mac_addr)
             
@@ -288,11 +291,13 @@ class WIZMSGHandler:
         for i in range(0, len(self.getreply)):
             f = open(filename, 'w')
             for i in range(2, len(self.getreply)):
-                cmd = self.getreply[i][:2]
+                getcmd = self.getreply[i][:2]
+                cmd = getcmd.decode('utf-8')
                 if cmd not in cmdsetObj.cmdset:
                     print('Invalid command. Check the command set')
                     exit(0)
-                param = self.getreply[i][2:]
+                getparam = self.getreply[i][2:]
+                param = getparam.decode('utf-8')
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
                 # sys.stdout.write("%s\r\n" % self.getreply[i])

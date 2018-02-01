@@ -15,7 +15,7 @@ import threading
 from wizsocket.TCPClient import TCPClient
 from time import gmtime, strftime, localtime
 
-msg = "Hello WIZ750SR\r"
+msg = b"Hello WIZ750SR\r"
 
 class TCPClientThread(threading.Thread):
     def __init__(self, serverip, serverport, trycount):
@@ -59,7 +59,8 @@ class TCPClientThread(threading.Thread):
             logstr = logstr + '======================================\r\n'
             sys.stdout.write(logstr)
         #     self.f.write(logstr)
-        self._Thread__stop()
+        if sys.version_info < (2, 9):
+            self._Thread__stop()
 
     def myTimer(self):
         sys.stdout.write('timer1 timeout\r\n')
@@ -123,9 +124,9 @@ class TCPClientThread(threading.Thread):
                         try:
                             if self.trycount is not -1 and self.totaltrycount >= self.trycount:
                                 break
-
                             self.client.write(msg)
-                            logstr = '[' + self.serverip + '] sent ' + msg + '\r\n'
+                            logmsg = msg.decode()
+                            logstr = '[' + self.serverip + '] sent ' + logmsg + '\r\n'
                             sys.stdout.write(logstr)
                             # self.f.write(logstr)
                             self.client.working_state = datasent_state
@@ -136,7 +137,8 @@ class TCPClientThread(threading.Thread):
                             self.timer1.start()
                             # sys.stdout.write('timer 1 started\r\n')
                         except Exception as e:
-                            sys.stdout.write('%r\r\n' % e)
+                            time.sleep(2)
+                            sys.stdout.write('===> 3 %r\r\n' % e)
                     elif self.client.working_state == datasent_state:
                         # sys.stdout.write('4 : %r' % self.client.getsockstate())
                         # minimum delay
@@ -144,7 +146,7 @@ class TCPClientThread(threading.Thread):
                         # time.sleep(1.5)
                         response = self.client.readline()
                         if (response != ""):
-                            logstr = '[' + self.serverip + '] received ' + response + '\r\n'
+                            logstr = '[' + self.serverip + '] received ' + response.decode() + '\r\n'
                             sys.stdout.write(logstr)
                             sys.stdout.flush()
                             # self.f.write(logstr)

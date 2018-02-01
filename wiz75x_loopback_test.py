@@ -68,6 +68,7 @@ if __name__=='__main__':
             for i in range(0, retval):
                 cmd_list[:] = []
                 mac_addr = wizmsghangler.getmacaddr(i)
+                mac_addr = mac_addr.decode('utf-8')
                 print ("Device %d mac addr: %s" % (i+1, mac_addr))
                 target_ip = dst_ip[:lastnumindex + 1] + str(lastnum + i)
                 target_gw = dst_ip[:lastnumindex + 1] + str(1)
@@ -125,14 +126,16 @@ if __name__=='__main__':
             threads[i].stop()
             print('thread %d stop. %s' % (i, thread[i]))
     finally:
+        print('Loopback test finished. Factory reset will be proceed.')
         for i in range(0, retval):
             cmd_list[:] = []
             mac_addr = wizmsghangler.getmacaddr(i)
+            mac_addr = mac_addr.decode('utf-8')
             cmd_list.append(["MA", mac_addr])
             cmd_list.append(["PW", ""])
             cmd_list.append(["FR", ""])
             cmd_list.append(["RT", ""])
-            # sys.stdout.write("%s\r\n" % cmd_list)
+            # print(cmd_list)
             wizmsghangler.makecommands(cmd_list, OP_FACTORYRESET)
             wizmsghangler.sendcommands()
             wizmsghangler.parseresponse()
