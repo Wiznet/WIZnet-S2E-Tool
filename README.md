@@ -1,7 +1,4 @@
-WIZnetTool
-===========
 
-WIZnetTool is module Configuration & Test Tool for WIZ75X Series.
 
 - [SUPPORT DEVICES](#support-devices)
 - [CONFIGURATION TOOL](#configuration-tool)
@@ -12,6 +9,12 @@ WIZnetTool is module Configuration & Test Tool for WIZ75X Series.
 - [FAQ](#faq)
 
 
+# OVERVIEW
+WIZnet-S2E-Tool is module Configuration & Test Tool for WIZnet S2E devices. \
+Python interpreter based and it is platform independent. 
+It works on version 2.7 python current.
+
+
 # SUPPORT DEVICES
 ## 1 Port Serial to Ethernet Module
 - [WIZ750SR](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
@@ -19,11 +22,11 @@ WIZnetTool is module Configuration & Test Tool for WIZ75X Series.
 - [WIZ750SR-100](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-100:start)
 - [WIZ750SR-105](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-105:start)
 - [WIZ750SR-110](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-110:start)
-- [WIZ750SR-120](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-120:start)
 - [WIZ107SR](http://www.wiznet.io/product-item/wiz107sr/) & [WIZ108SR](http://www.wiznet.io/product-item/wiz108sr/)
 
 ## 2 Port Serial to Ethernet Module
 - [WIZ752SR-120](https://wizwiki.net/wiki/doku.php?id=products:s2e_module:wiz752sr-120:start)
+- [WIZ752SR-125](https://wizwiki.net/wiki/doku.php?id=products:s2e_module:wiz752sr-125:start)
 
 # CONFIGURATION TOOL
 - [CLI Configuration Tool](#cli-configuration-tool)
@@ -36,7 +39,7 @@ WIZnetTool is module Configuration & Test Tool for WIZ75X Series.
 ### Pre-Required
 #### 1) Python
 
-WIZnetTool works on Python version 2.7.X. 
+WIZnet-S2E-Tool works on Python version 2.7.
 If you don't have Python, refer to https://www.python.org/
 
 If python already installed, check the version as follow.
@@ -50,6 +53,94 @@ Next, you have to install **pySerial** module as follow.
     $ pip install pyserial
 If you want more detail, refer to https://github.com/pyserial/pyserial
 
+----
+
+### Option
+#### optional arguments:
+    -h, --help            show this help message and exit
+    -d MACADDR, --device MACADDR
+                            Device mac address to configuration
+    -a, --all             Configuration about all devices (in mac_list.txt)
+
+#### Firmware Upload:
+    -u FWFILE, --upload FWFILE
+                        Firmware upload from file
+
+#### No parameter Options:
+    -s, --search          Search devices (in same network)
+    -c, --clear           Mac list clear
+    -r, --reset           Reboot device
+    -f, --factory         Factory reset
+
+#### Network Configuration:
+    --nmode {0,1,2,3}     Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)
+    --alloc {0,1}         IP address allocation method (0: Static, 1: DHCP)
+    --ip IP               Local ip address
+    --subnet SUBNET       Subnet mask
+    --gw GW               Gateway address
+    --dns DNS             DNS server address
+    --port PORT           Local port number
+    --rip IP              Remote host IP address / Domain
+    --rport PORT          Remote host port number
+
+#### UART #0 Configurations:
+    --baud0 BAUD0         baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)
+    --data0 {0,1}         data bit (0: 7-bit, 1: 8-bit)
+    --parity0 {0,1,2}     parity bit (0: NONE, 1: ODD, 2: EVEN)
+    --stop0 {0,1}         stop bit (0: 1-bit, 1: 2-bit)
+    --flow0 {0,1,2}       flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)
+    --time0 TIME0         Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))
+    --size0 SIZE0         Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))
+    --char0 CHAR0         Designated character delimiter (00: Not use / Other: Designated character)
+    --it timer            Inactivity timer value for TCP connection close
+                            when there is no data exchange (0: Not use / 1~65535: timer value)
+    --ka {0,1}            Keep-alive packet transmit enable for checking TCP connection established
+    --ki number           Initial TCP keep-alive packet transmission interval value
+                            (0: Not use / 1~65535: Initial Keep-alive packet transmission interval (Unit: millisecond))
+    --ke number           TCP Keep-alive packet transmission retry interval value
+                            (0: Not use / 1~65535: Keep-alive packet transmission retry interval (Unit: millisecond))
+    --ri number           TCP client reconnection interval value [TCP client only]
+                            (0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))
+
+#### UART #1 Configurations:
+    --baud1 BAUD1         baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)
+    --data1 {0,1}         data bit (0: 7-bit, 1: 8-bit)
+    --parity1 {0,1,2}     parity bit (0: NONE, 1: ODD, 2: EVEN)
+    --stop1 {0,1}         stop bit (0: 1-bit, 1: 2-bit)
+    --flow1 {0,1,2}       flow control (0: NONE, 1: XON/XOFF, 2: RTS/CTS)
+    --time1 TIME1         Time delimiter (0: Not use / 1~65535: Data packing time (Unit: millisecond))
+    --size1 SIZE1         Data size delimiter (0: Not use / 1~255: Data packing size (Unit: byte))
+    --char1 CHAR1         Designated character delimiter (00: Not use / Other: Designated character)
+    --rv timer            Inactivity timer value for TCP connection close
+                            when there is no data exchange (0: Not use / 1~65535: timer value)
+    --ra {0,1}            Keep-alive packet transmit enable for checking TCP connection established
+    --rs number           Initial TCP keep-alive packet transmission interval value
+                            (0: Not use / 1~65535: Initial Keep-alive packet transmission interval (Unit: millisecond))
+    --re number           TCP Keep-alive packet transmission retry interval value
+                            (0: Not use / 1~65535: Keep-alive packet transmission retry interval (Unit: millisecond))
+    --rr number           TCP client reconnection interval value [TCP client only]
+                            (0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))
+
+#### UART Command mode switch settings:
+    --te {0,1}            Serial command mode switch code enable
+    --ss 3-byte hex       Serial command mode switch code (default: 2B2B2B)
+
+#### Configs:
+    --cp {0,1}            TCP connection password enable [TCP server mode only]
+    --np pw               TCP connection password (string, up to 8 bytes / default: None) [TCP server mode only]
+    --sp value            Search identification code (string, up to 8 bytes / default: None)
+    --dg {0,1}            Serial debug message enable (Debug UART port)
+
+#### Configuration from File:
+    --setfile SETFILE     File name to Set
+    --getfile GETFILE     File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).
+
+#### Set IP address for multi devices:
+    -m ipaddr, --multiset ipaddr
+                        Set IP address for all device in 'mac_list.txt'. Parameter is first address.
+
+----
+
 ### Usage
     $ python wizconfig.py [Options ...]
 You can see detail description as following command.
@@ -58,14 +149,19 @@ You can see detail description as following command.
 
 When config the serial port, refer below.
 
+- ***Warning***  
+The *UART #1 Configurations* is for 2 port S2E devices. refer to below.
+
 - 1 Port S2E devices
     - WIZ750SR Series
-    - Use **UART #0 Configurations**
+    - Use **UART #0 Configurations** only.
 - 2 Port S2E devices
     - WIZ752SR Series
     - Use **UART #0 Configurations** & **UART #1 Configurations** both.
 
 And all other options are common for 1 port & 2 port S2E devices.
+
+----
 
 #### 1. Search Devices
 First, you could search devices use '-s' or '--search' option. 
@@ -81,18 +177,19 @@ And then **mac_list.txt** is created, there are MAC address information of each 
 * All Devices
 
       $ python wizconfig.py -a [Options ...]
-    
-* Set example
 
-    Set baud rate to 115200 of 1 port S2E device.
 
-    If device's mac address is '00:08:DC:AA:BB:CC', you can set like this.
+*Set example*
 
-        $ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200 
+Set baud rate to 115200 of 1 port S2E device.
 
-    If you want to set baud rate for all devices on the network, do like this.
+If device's mac address is '00:08:DC:AA:BB:CC', you can set like this.
 
-        $ python wizconfig.py -a --baud0 115200 
+    $ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200 
+
+If you want to set baud rate for all devices on the network, do like this.
+
+    $ python wizconfig.py -a --baud0 115200 
 
 
 #### 3. Firmware Upload
@@ -167,10 +264,12 @@ Then, config deivce use --setfile option.
 
       $ python wizconfig.py -a --setfile set_cmd.txt
 
-
+----
     
 ## GUI Configuration Tool
 _GUI Configuration Tool is not supported yet. It will be updated soon._
+
+----
 
 # TEST TOOL
 ## Loopback Test
@@ -192,6 +291,8 @@ This tool is perform simple loopback test for functional verification of WIZ75XS
     $ python wiz75x_loopback_test.py -s <number of port> -t 192.168.X.X
 
 <!-- ## Auto Test Tool -->
+
+
 
 # FAQ
 If you have any problems, please visit [WIZnet Forum](https://forum.wiznet.io/).

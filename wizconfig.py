@@ -9,7 +9,6 @@ import binascii
 import sys
 import getopt
 import logging
-import serial
 import re
 import os
 from WIZ750CMDSET import WIZ750CMDSET
@@ -256,6 +255,9 @@ if __name__ == '__main__':
                 sys.exit(0)
             f = open('mac_list.txt', 'r')
             mac_list = f.readlines()
+            if len(mac_list) is 0:
+                print('There is no mac address. Please search devices from \'-s/--search\' option.')
+                sys.exit(0)
             f.close()
             # Check parameter
             if args.multiset:
