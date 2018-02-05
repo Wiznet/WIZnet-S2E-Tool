@@ -106,7 +106,7 @@ class TCPClient:
 				self.buflen += len(tmpbuf)
 #				self.logger.debug("2 buflen: %d\r\n" % self.buflen)
 			
-				index = self.rcvbuf.find("\r", 0, self.buflen)
+				index = self.rcvbuf.find(b"\r", 0, self.buflen)
 				if index != -1:
 #					sys.stdout.write("index %d\r\n" % index)
 					retval = self.rcvbuf[0:index+1]
@@ -132,7 +132,55 @@ class TCPClient:
 			self.time = time.time()
 			
 		return ""	
-				
+
+	def readbytes(self, length):
+		if self.buflen > 0:
+			if self.buflen >= length:
+				retbuf = self.rcvbuf[:length]
+				self.rcvbuf[0:] = self.rcvbuf[length:]
+				self.buflen -= length
+			else:
+				retbuf = self.rcvbuf[:self.buflen]
+				self.buflen = 0
+		
+			return retbuf
+		else:
+			inputready, outputready, exceptready = select.select([self.sock], [], [], 0)
+
+#		sys.stdout.write("%r\r\n" % inputready)		
+#		sys.stdout.write("%r\r\n" % self.sock)
+			for i in inputready:
+				if i == self.sock:
+#					sys.stdout.write("select activated\r\n")
+					try:
+						tmpbuf = self.sock.recv(MAXBUFLEN - self.buflen)
+					except socket.error:
+						self.sock = None
+						self.state = CLOSE_STATE
+						self.working_state = idle_state
+						self.buflen = 0
+						return None
+						
+#					sys.stdout.write("tmpbuf: ")
+#					sys.stdout.write(tmpbuf)
+#					sys.stdout.flush()
+					self.rcvbuf[self.buflen:] = tmpbuf
+					self.buflen += len(tmpbuf)
+					
+# 					if len(self.rcvbuf) > 0:
+# 						retval = "%c" % self.rcvbuf[0]
+# #						sys.stdout.write("rcvbuf: ")
+# #						sys.stdout.write(self.rcvbuf)
+# 						self.rcvbuf[0:] = self.rcvbuf[1:]
+# #						sys.stdout.write("rcvbuf: ")
+# #						sys.stdout.write(self.rcvbuf)
+# #						sys.stdout.flush()
+# 						self.buflen -= 1
+			
+						# return retval
+			return None
+
+
 	def read(self):
 		if self.buflen > 0:
 			retval = "%c" % self.rcvbuf[0]

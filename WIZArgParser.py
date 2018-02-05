@@ -44,34 +44,33 @@ class WIZArgParser:
                                         formatter_class=argparse.RawTextHelpFormatter)
         parser.add_argument('-d', '--device', dest='macaddr', help='Device mac address to configuration')
         parser.add_argument('-a', '--all', action='store_true', help='Configuration about all devices (in mac_list.txt)')
+        parser.add_argument('-c', '--clear', action='store_true', help='Mac list clear')
 
-        ## FW upload
-        group = parser.add_argument_group('Firmware Upload')
-        group.add_argument('-u', '--upload', dest='fwfile', help='Firmware upload from file')
-
-        group = parser.add_argument_group('No parameter Options')
+        group = parser.add_argument_group('Configuration')
         group.add_argument('-s', '--search', action='store_true', help='Search devices (in same network)') 
-        group.add_argument('-c', '--clear', action='store_true', help='Mac list clear')
         group.add_argument('-r', '--reset', action='store_true', help='Reboot device')
         group.add_argument('-f', '--factory', action='store_true', help='Factory reset')
+        # multi ip set
+        group.add_argument('-m', '--multiset', metavar='ipaddr', help='Set IP address for all devices in \'mac_list.txt\'. Parameter is first address.')
+        # F/W upload
+        group.add_argument('-u', '--upload', dest='fwfile', help='Firmware upload from file')
         
         ## Network config
-        group = parser.add_argument_group('Network Configuration')
-        # exclusive_group = group.add_mutually_exclusive_group()
-        group.add_argument('--nmode', choices=['0', '1', '2', '3'],
-                help='Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)')
-        group.add_argument('--alloc', choices=['0', '1'],
-                help='IP address allocation method (0: Static, 1: DHCP)')
+        group = parser.add_argument_group('General Options')
+        group.add_argument('--alloc', choices=['0', '1'], help='IP address allocation method (0: Static, 1: DHCP)')
         group.add_argument('--ip', help='Local ip address')
         group.add_argument('--subnet', help='Subnet mask')
         group.add_argument('--gw', help='Gateway address')
         group.add_argument('--dns', help='DNS server address')
-        group.add_argument('--port', help='Local port number')
-        group.add_argument('--rip', metavar='IP', help='Remote host IP address / Domain')
-        group.add_argument('--rport', metavar='PORT', help='Remote host port number')
+        
+        ### Channel 0 options
+        group = parser.add_argument_group('Channel #0 Options')
+        group.add_argument('--port0', help='Local port number')
+        group.add_argument('--nmode0', choices=['0', '1', '2', '3'],
+                help='Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)')
+        group.add_argument('--rip0', metavar='IP', help='Remote host IP address / Domain')
+        group.add_argument('--rport0', metavar='PORT', help='Remote host port number')
 
-        ## UART 0 Options
-        group = parser.add_argument_group('UART #0 Configurations')
         group.add_argument('--baud0', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)')
         group.add_argument('--data0', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity0', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
@@ -93,8 +92,14 @@ class WIZArgParser:
                 help='''TCP client reconnection interval value [TCP client only]\n(0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))''')
         # group.add_argument('--ec',  choices=['0','1'], help='UART Echoback function enable (Data UART port)')
 
-        ## UART 1 Options
-        group = parser.add_argument_group('UART #1 Configurations')
+        ## Channel 1 options
+        group = parser.add_argument_group('Channel #1 Options')
+        group.add_argument('--port1', help='Local port number')
+        group.add_argument('--nmode1', choices=['0', '1', '2', '3'],
+                help='Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)')
+        group.add_argument('--rip1', metavar='IP', help='Remote host IP address / Domain')
+        group.add_argument('--rport1', metavar='PORT', help='Remote host port number')
+        
         group.add_argument('--baud1', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)')
         group.add_argument('--data1', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity1', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
@@ -119,8 +124,8 @@ class WIZArgParser:
         group.add_argument('--te', choices=['0','1'], help='Serial command mode switch code enable')
         group.add_argument('--ss', metavar='3-byte hex', help='Serial command mode switch code (default: 2B2B2B)')
 
-        ## Configs
-        group = parser.add_argument_group('Configs')
+        ## etc options
+        group = parser.add_argument_group('ETC options')
         group.add_argument('--cp', choices=['0','1'], help='TCP connection password enable [TCP server mode only]')
         group.add_argument('--np', metavar='pw', help='TCP connection password (string, up to 8 bytes / default: None) [TCP server mode only]')
         group.add_argument('--sp', metavar='value', help='Search identification code (string, up to 8 bytes / default: None)')
@@ -132,9 +137,5 @@ class WIZArgParser:
         group.add_argument('--setfile', help='File name to Set')
         group.add_argument('--getfile', help='File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).')
 
-        ## Set multiIP
-        group = parser.add_argument_group('\nSet IP address for multi devices')
-        # group.add_argument('-m', '--multiset', action='store_true', help='Set multi IP for all device (in mac_list.txt)')
-        group.add_argument('-m', '--multiset', metavar='ipaddr', help='''Set IP address for all device in 'mac_list.txt'. Parameter is first address.''')
         args = parser.parse_args()
         return args

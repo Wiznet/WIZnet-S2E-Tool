@@ -186,18 +186,20 @@ if __name__ == '__main__':
         
         op_code = OP_SETCOMMAND
         print('Devcie configuration start...\n')
-        # Network config
-        if args.nmode:  setcmd['OP'] = args.nmode
+        # General config
+        
         if args.alloc: setcmd['IM'] = args.alloc
         if args.ip:  setcmd['LI'] = args.ip
         if args.subnet: setcmd['SM'] = args.subnet
         if args.gw: setcmd['GW'] = args.gw
         if args.dns: setcmd['DS'] = args.dns
-        if args.port: setcmd['LP'] = args.port
-        if args.rip: setcmd['RH'] = args.rip
-        if args.rport: setcmd['RP'] = args.rport
+        
+        # Channel 0 config
+        if args.nmode0:  setcmd['OP'] = args.nmode0
+        if args.port0: setcmd['LP'] = args.port0
+        if args.rip0: setcmd['RH'] = args.rip0
+        if args.rport0: setcmd['RP'] = args.rport0
 
-        # UART0 config
         if args.baud0: setcmd['BR'] = str(BAUDRATES.index(args.baud0))
         if args.data0: setcmd['DB'] = args.data0
         if args.parity0: setcmd['PR'] = args.parity0
@@ -206,7 +208,19 @@ if __name__ == '__main__':
         if args.time0: setcmd['PT'] = args.time0
         if args.size0: setcmd['PS'] = args.size0
         if args.char0: setcmd['PD'] = args.char0
-        # UART1 config
+
+        if args.it: setcmd['IT'] = args.it
+        if args.ka: setcmd['KA'] = args.ka
+        if args.ki: setcmd['KI'] = args.ki
+        if args.ke: setcmd['KE'] = args.ke
+        if args.ri: setcmd['RI'] = args.ri
+
+        # Channel 1 config
+        if args.nmode1:  setcmd['QO'] = args.nmode1
+        if args.port1: setcmd['QL'] = args.port1
+        if args.rip1: setcmd['QH'] = args.rip1
+        if args.rport1: setcmd['QP'] = args.rport1
+
         if args.baud1: setcmd['EB'] = str(BAUDRATES.index(args.baud1))
         if args.data1: setcmd['ED'] = args.data1
         if args.parity1: setcmd['EP'] = args.parity1
@@ -215,20 +229,13 @@ if __name__ == '__main__':
         if args.time1: setcmd['NT'] = args.time1
         if args.size1: setcmd['NS'] = args.size1
         if args.char1: setcmd['ND'] = args.char1
-        
-        # UART0 Config
-        if args.it: setcmd['IT'] = args.it
-        if args.ka: setcmd['KA'] = args.ka
-        if args.ki: setcmd['KI'] = args.ki
-        if args.ke: setcmd['KE'] = args.ke
-        if args.ri: setcmd['RI'] = args.ri
-        # UART1 Config
+
         if args.rv: setcmd['RV'] = args.rv
         if args.ra: setcmd['RA'] = args.ra
         if args.rs: setcmd['RS'] = args.rs
         if args.re: setcmd['RE'] = args.re
         if args.rr: setcmd['RR'] = args.rr
-
+        
         # Configs
         if args.cp: setcmd['CP'] = args.cp
         if args.np: setcmd['NP'] = args.np

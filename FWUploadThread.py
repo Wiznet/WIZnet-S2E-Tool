@@ -9,9 +9,10 @@ import time
 import logging
 import threading
 import getopt
+import os
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
-
+import binascii
 from WIZMSGHandler import WIZMSGHandler
 from WIZUDPSock import WIZUDPSock
 from wizsocket.TCPClient import TCPClient
@@ -48,6 +49,8 @@ class FWUploadThread(threading.Thread):
         self.serverip = None
         self.serverport = None
 
+        self.sentbyte = 0
+
     def setparam(self, dest_mac, binaryfile):
         self.dest_mac = dest_mac
         self.bin_filename = binaryfile
@@ -79,12 +82,25 @@ class FWUploadThread(threading.Thread):
         wizmsghangler.sendcommands()
         resp = wizmsghangler.parseresponse()
         
-        resp = resp.decode('utf-8')
-        # print('resp', resp)
-        params = resp.split(':')
-        sys.stdout.write('Dest IP: %r, Dest Port num: %r\r\n' % (params[0], int(params[1])))
-        self.serverip = params[0]
-        self.serverport = int(params[1])
+        if resp is not '':
+            resp = resp.decode('utf-8')
+            # print('resp', resp)
+            params = resp.split(':')
+            sys.stdout.write('Dest IP: %s, Dest Port num: %r\r\n' % (params[0], int(params[1])))
+            self.serverip = params[0]
+            self.serverport = int(params[1])
+
+            # network reachable check
+            ping_reponse = os.system("ping " + ("-n 2 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
+            # ping_reponse = os.system('ping -n 1 ' + params[0])
+            if ping_reponse == 0:
+                print('Device[%s] network OK' % self.dest_mac)
+            else:
+                print('<ERROR>: Device[%s]: %s is unreachable.\n\tRefer --multiset or --ip options to set IP address.' % (self.dest_mac, self.serverip))
+                sys.exit(0)
+        else:
+            print('No response from device. Check the network or device status.')
+            sys.exit(0)
 
         try:
             self.client = TCPClient(2, params[0], int(params[1]))
@@ -99,73 +115,120 @@ class FWUploadThread(threading.Thread):
                     if self.timer1 is not None:
                         self.timer1.cancel()
                     cur_state = self.client.state
-                    self.client.open()
-                    # sys.stdout.write('1 : %r\r\n' % self.client.getsockstate())
-                    # sys.stdout.write("%r\r\n" % self.client.state)
-                    if self.client.state is SOCK_OPEN_STATE:
-                        sys.stdout.write('[%r] is OPEN\r\n' % (self.serverip))
-                        # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
-                        time.sleep(1)
+                    try:
+                        self.client.open()
+                        # sys.stdout.write('1 : %r\r\n' % self.client.getsockstate())
+                        # sys.stdout.write("%r\r\n" % self.client.state)
+                        if self.client.state is SOCK_OPEN_STATE:
+                            sys.stdout.write('[%r] is OPEN\r\n' % (self.serverip))
+                            # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
+                            # time.sleep(1)
+                    except Exception as e:
+                        sys.stdout.write('%r\r\n' % e)
 
                 elif self.client.state is SOCK_OPEN_STATE:
                     cur_state = self.client.state
-                    self.client.connect()
-                    # sys.stdout.write('2 : %r' % self.client.getsockstate())
-                    if self.client.state is SOCK_CONNECT_STATE:
-                        sys.stdout.write('[%r] is CONNECTED\r\n' % (self.serverip))
-                        # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
-                        time.sleep(1)
-
+                    # time.sleep(2)
+                    try:
+                        self.client.connect()
+                        # sys.stdout.write('2 : %r' % self.client.getsockstate())
+                        if self.client.state is SOCK_CONNECT_STATE:
+                            sys.stdout.write('[%r] is CONNECTED\r\n' % (self.serverip))
+                            # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
+                            # time.sleep(1)
+                    except Exception as e:
+                        sys.stdout.write('%r\r\n' % e)
 
                 elif self.client.state is SOCK_CONNECT_STATE:
-                    if self.client.working_state == idle_state:
+                    # if self.client.working_state == idle_state:
                         # sys.stdout.write('3 : %r' % self.client.getsockstate())
-                        try:
-                            while self.remainbytes is not 0:
+                    try:
+                        while self.remainbytes is not 0:
+                            if self.client.working_state == idle_state:
                                 if self.remainbytes >= 1024:
                                     msg = bytearray(1024)
                                     msg[:] = self.data[self.curr_ptr:self.curr_ptr+1024]
                                     self.client.write(msg)
+                                    self.sentbyte = 1024
                                     # sys.stdout.write('1024 bytes sent from at %r\r\n' % (self.curr_ptr))
+                                    sys.stdout.write('[%s] 1024 bytes sent from at %r\r\n' % (self.serverip, self.curr_ptr))
                                     self.curr_ptr += 1024
                                     self.remainbytes -= 1024
                                 else :
                                     msg = bytearray(self.remainbytes)
                                     msg[:] = self.data[self.curr_ptr:self.curr_ptr+self.remainbytes]
                                     self.client.write(msg)
-                                    sys.stdout.write('...\nLast %r byte sent from at %r \r\n' % (self.remainbytes, self.curr_ptr))
-                                    sys.stdout.write('Device [%s] firmware upload success!\r\n' % (self.dest_mac))
+                                    # sys.stdout.write('Last %r byte sent from at %r \r\n' % (self.remainbytes, self.curr_ptr))
+                                    sys.stdout.write('[%s] Last %r byte sent from at %r \r\n' % (self.serverip, self.remainbytes, self.curr_ptr))
                                     self.curr_ptr += self.remainbytes
                                     self.remainbytes = 0
+                                    self.sentbyte = self.remainbytes
 
-                            self.client.working_state = datasent_state
+                                self.client.working_state = datasent_state
 
-                            self.timer1 = threading.Timer(2.0, self.myTimer)
-                            self.timer1.start()
+                                self.timer1 = threading.Timer(2.0, self.myTimer)
+                                self.timer1.start()
+                            elif self.client.working_state == datasent_state:
+                                # sys.stdout.write('4 : %r' % self.client.getsockstate())
+                                response = self.client.readbytes(2)
+                                # print('response: %r' % response)
+                                if response is not None:
+                                    if int(binascii.hexlify(response), 16):
+                                        self.client.working_state = idle_state
+                                        self.timer1.cancel()
+                                        self.istimeout = 0
+                                    else:
+                                        print('ERROR: No response from device. Stop FW upload...')
+                                        self.client.close()
+                                        sys.exit(0)
+
+                                # if (response != ""):
+                                #     self.timer1.cancel()
+                                #     self.istimeout = 0
+
+                                #     time.sleep(0.1)
+                                #     self.client.working_state = idle_state
+                                #     self.client.close()
+
+                                if self.istimeout is 1:
+                                    # self.timer1.cancel()
+                                    self.istimeout = 0
+                                    self.client.working_state = idle_state
+                                    self.client.close()
+                                    sys.exit(0)
+
+                        # sys.stdout.write('Device [%s] firmware upload success!\r\n' % (self.dest_mac))
+                           
+
+                            # self.client.working_state = datasent_state
+
+                            # self.timer1 = threading.Timer(2.0, self.myTimer)
+                            # self.timer1.start()
                             # sys.stdout.write('timer 1 started\r\n')
-                        except Exception as e:
-                            sys.stdout.write('%r\r\n' % e)
-                    elif self.client.working_state == datasent_state:
-                        sys.stdout.write('4 : %r' % self.client.getsockstate())
-                        response = self.client.read()
-                        if (response != ""):
-                            self.timer1.cancel()
-                            self.istimeout = 0
+                    except Exception as e:
+                        sys.stdout.write('%r\r\n' % e)
+                    # elif self.client.working_state == datasent_state:
+                    #     sys.stdout.write('4 : %r' % self.client.getsockstate())
+                    #     response = self.client.read()
+                    #     if (response != ""):
+                    #         self.timer1.cancel()
+                    #         self.istimeout = 0
 
-                            time.sleep(0.1)
-                            self.client.working_state = idle_state
-                            self.client.close()
+                    #         time.sleep(0.1)
+                    #         self.client.working_state = idle_state
+                    #         self.client.close()
 
-                        if self.istimeout is 1:
-                            # self.timer1.cancel()
-                            self.istimeout = 0
-                            self.client.working_state = idle_state
-                            self.client.close()
-
+                    #     if self.istimeout is 1:
+                    #         # self.timer1.cancel()
+                    #         self.istimeout = 0
+                    #         self.client.working_state = idle_state
+                    #         self.client.close()
+                        # self.client.close()
                         response = ""
                     break
-        except:
-            pass
+            sys.stdout.write('Device [%s] firmware upload success!\r\n' % (self.dest_mac))
+        except (KeyboardInterrupt, SystemExit):
+            sys.stdout.write('%r\r\n' % e)
         finally:
             pass
 

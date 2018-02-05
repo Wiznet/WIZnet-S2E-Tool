@@ -53,6 +53,7 @@ class WIZMSGHandler:
         self.ip_mode = []
         self.mode_list = []
         self.devname = []
+        self.version = []
 
         self.getreply = []
 
@@ -83,15 +84,6 @@ class WIZMSGHandler:
             return ip_addr
         else:
             print('getipaddr: index is out of range')
-            return None
-    
-    def getdevname(self, index):
-        if len(self.devname) >= (index + 1):
-            devname = self.devname[index]
-            print('devname:' + devname)
-            return devname
-        else:
-            print('getdevname: index is out of range')
             return None
 
     def getopmode(self, index):
@@ -188,9 +180,10 @@ class WIZMSGHandler:
                             # if 'MN' in replylists[i] and "WIZ750SR" not in replylists[i][2:] :
                             #     self.mac_list.pop()
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            # if 'VR' in replylists[i] and "1.0.0" not in replylists[i][2:] :
-                            if b'VR' in replylists[i] and b"1.1.2dev" in replylists[i][2:] :
-                                self.mac_list.pop()     
+                            if b'VR' in replylists[i]:
+                                self.version.append(replylists[i][2:])
+                            # if b'VR' in replylists[i] and b"1.1.2dev" in replylists[i][2:] :
+                            #     self.mac_list.pop()     
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
                             if b'OP' in replylists[i]:
                                 self.mode_list.append(replylists[i][2:])
