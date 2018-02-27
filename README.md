@@ -14,6 +14,19 @@ WIZnet-S2E-Tool is module Configuration & Test Tool for WIZnet S2E devices. \
 Python interpreter based and it is platform independent. \
 It works on version 2.7 and 3.6 python.
 
+## Tutorial
+[WIZwiki](https://wizwiki.net/wiki/doku.php) provides a step-by-step tutorial on the WIZnet-S2E-Tool. \
+You can see it on the following links. This content will continue to be updated.
+
+- [1. Overview & Environment](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:overview:en)
+- [2. How to use CLI Config Tool](https://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:option:en)
+- [3. Single device configuration](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:single:en)
+- [4. Multi devices configuration](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:multi:en)
+- [5. Using File Options](https://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:fileoption:en)
+- [6. Loopback Test]
+
+----
+
 # SUPPORT DEVICES
 ## 1 Port Serial to Ethernet Module
 - [WIZ750SR](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
@@ -29,7 +42,7 @@ It works on version 2.7 and 3.6 python.
 
 # CONFIGURATION TOOL
 - [CLI Configuration Tool](#cli-configuration-tool)
-- GLI Configuration Tool (Not suppoted yet)
+- GUI Configuration Tool (Not supported yet)
 <!-- - [GUI Configuration Tool](#GUI-Configuration-Tool) -->
 
 
@@ -76,7 +89,7 @@ or
     --gw GW               Gateway address
     --dns DNS             DNS server address
 
-#### Channel #0 Options:
+#### Channel #1 Options:
     --port0 PORT0         Local port number
     --nmode0 {0,1,2,3}    Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)
     --rip0 IP             Remote host IP address / Domain
@@ -99,7 +112,7 @@ or
     --ri number           TCP client reconnection interval value [TCP client only]
                             (0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))
 
-#### Channel #1 Options:
+#### Channel #2 Options:
     --port1 PORT1         Local port number
     --nmode1 {0,1,2,3}    Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)
     --rip1 IP             Remote host IP address / Domain
@@ -148,10 +161,10 @@ You can see detail description as following command.
 
 - 1 Port S2E devices
     - WIZ750SR Series
-    - Use [Channel #0 Options](#channel-#0-options:) only.
+    - Use [Channel #1 Options](#channel-1-options) only.
 - 2 Port S2E devices
     - WIZ752SR Series
-    - Use [Channel #0 Options](#channel-#0-options:) & [Channel #1 Options](#channel-#1-options) both.
+    - Use [Channel #1 Options](#channel-1-options) & [Channel #2 Options](#channel-2-options) both.
 
 And **all other options are common** for 1 port & 2 port S2E devices.
 
@@ -161,11 +174,13 @@ And **all other options are common** for 1 port & 2 port S2E devices.
 First, you could search devices use '-s' or '--search' option. 
 
     $ python wizconfig.py -s
-And then **mac_list.txt** is created, there are MAC address information of each devices.
+And then **mac_list.txt** is created, there are MAC address information of each device.
 
 </br>
 
 #### 2. Configuration
+First, find the option(s) for you want to set from [Options](#options). And then config the device(s) use following command.
+
 * Single Device
 
       $ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]
@@ -191,7 +206,7 @@ And then **mac_list.txt** is created, there are MAC address information of each 
 #### 3. Firmware Upload
 
 ##### Step 1 - Set IP address
-When do device's firmware upload, need TCP connection with devices to send Firmware file. 
+When do device's firmware upload, need TCP connection with device to send Firmware file.
 
 So first, use **-m/--multiset** option for **set ip address to the same network-band as host**.
 
@@ -244,21 +259,21 @@ You can use example files named **cmd_oneport.txt** and **cmd_twoport.txt**.
 
 * Single device
 
-  * One port devices
+  * for One port
 
         $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_oneport.txt
 
-  * Two port devices
+  * for Two port
 
         $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_twoport.txt
 
 * ALL devices
 
-  * One port devices
+  * for One port
 
         $ python wizconfig.py -a --getfile cmd_oneport.txt
 
-  * Two port devices
+  * for Two port
 
         $ python wizconfig.py -a --getfile cmd_twoport.txt
 

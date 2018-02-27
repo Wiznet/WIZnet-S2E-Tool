@@ -91,7 +91,8 @@ class FWUploadThread(threading.Thread):
             self.serverport = int(params[1])
 
             # network reachable check
-            ping_reponse = os.system("ping " + ("-n 2 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
+            os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
+            ping_reponse = os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
             # ping_reponse = os.system('ping -n 1 ' + params[0])
             if ping_reponse == 0:
                 print('Device[%s] network OK' % self.dest_mac)
@@ -122,7 +123,7 @@ class FWUploadThread(threading.Thread):
                         if self.client.state is SOCK_OPEN_STATE:
                             sys.stdout.write('[%r] is OPEN\r\n' % (self.serverip))
                             # sys.stdout.write('[%r] client.working_state is %r\r\n' % (self.serverip, self.client.working_state))
-                            # time.sleep(1)
+                            time.sleep(0.5)
                     except Exception as e:
                         sys.stdout.write('%r\r\n' % e)
 
@@ -227,6 +228,9 @@ class FWUploadThread(threading.Thread):
                         response = ""
                     break
             sys.stdout.write('Device [%s] firmware upload success!\r\n' % (self.dest_mac))
+            # for send FIN packet 
+            time.sleep(2.5)
+            self.client.shutdown()
         except (KeyboardInterrupt, SystemExit):
             sys.stdout.write('%r\r\n' % e)
         finally:

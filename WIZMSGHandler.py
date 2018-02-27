@@ -266,20 +266,10 @@ class WIZMSGHandler:
             print('No reply from device. exit program.')
             sys.exit(0)
 
+        cmdsetObj = WIZ752CMDSET(logging.ERROR)
+
         mac_addr = macaddr.replace(":", "")
-        for i in range(0, len(self.getreply)):
-            if b'MN' in self.getreply[i]:
-                cmdsetObj = WIZ752CMDSET(logging.ERROR)
-                filename = 'getfile_%s.log' % (mac_addr)
-            
-            # if 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ752SR-12x':
-            #     cmdsetObj = WIZ752CMDSET(logging.ERROR)
-            #     filename = 'get_detail_2port_%s.txt' % (mac_addr)
-            #     # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
-            # elif 'MN' in self.getreply[i] and self.getreply[i][2:] in 'WIZ750SR':
-            #     cmdsetObj = WIZ750CMDSET(logging.ERROR)
-            #     filename = 'get_detail_1port_%s.txt' % (mac_addr)
-            #     # sys.stdout.write("* Product name: %s\r\n" % (self.getreply[i][2:]))
+        filename = 'getfile_%s.log' % (mac_addr)
 
         for i in range(0, len(self.getreply)):
             f = open(filename, 'w')

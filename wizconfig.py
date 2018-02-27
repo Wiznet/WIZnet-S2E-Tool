@@ -30,6 +30,9 @@ OP_FWUP = 6
 
 BAUDRATES = [300, 600, 1200, 1800, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400]
 
+cmd_oneport = ['MC','VR','MN','UN','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP']
+cmd_twoport = ['MC','VR','MN','UN','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP','QS','QO','QH','QP','QL','RV','RA','RE','RR','EI','EN','RS','EB','ED','EP','ES','EF','E0','E1','NT','NS','ND']
+
 class WIZMakeCMD:
     def search(self):
         cmd_list = []
@@ -37,16 +40,10 @@ class WIZMakeCMD:
         # 장치 검색 시 필요 정보 Get
         cmd_list.append(["MA", "FF:FF:FF:FF:FF:FF"])
         cmd_list.append(["PW", " "])
-        cmd_list.append(["MC", ""])
-        cmd_list.append(["LI", ""])    # IP address
-        cmd_list.append(["VR", ""])
-        cmd_list.append(["MN", ""])
-        cmd_list.append(["RH", ""])
-        cmd_list.append(["RP", ""])
-        cmd_list.append(["OP", ""]) # Network operation mode
-        cmd_list.append(["IM", ""]) # IP address allocation method(Static/DHCP)
+        for cmd in cmd_twoport:
+            cmd_list.append([cmd, ""])
         return cmd_list
-    
+
     def get_value(self, mac_addr, filename):
         # 파일의 command들에 대한 정보를 가져옴
         cmd_list = []
@@ -73,6 +70,7 @@ class WIZMakeCMD:
                 getcmd_list.append(line[:2])
         for cmd in getcmd_list:
             cmd_list.append([cmd, ""])
+        
         cmd_list.append(["SV", ""])
         cmd_list.append(["RT", ""])
         f.close()
@@ -375,7 +373,7 @@ if __name__ == '__main__':
                 print('* Single devcie config: %s' % mac_addr)
                 cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
                 get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
-            # print(get_cmd_list)
+                # print('get_cmd_list', get_cmd_list)
                     
         if args.all or args.multiset:
             if not args.fwfile:
@@ -409,6 +407,4 @@ if __name__ == '__main__':
             wizmsghangler.parseresponse()
             
             wizmsghangler.get_log()
-            
-
         
