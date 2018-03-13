@@ -48,6 +48,7 @@ class WIZArgParser:
 
         group = parser.add_argument_group('Configuration')
         group.add_argument('-s', '--search', action='store_true', help='Search devices (in same network)') 
+        
         group.add_argument('-r', '--reset', action='store_true', help='Reboot device')
         group.add_argument('-f', '--factory', action='store_true', help='Factory reset')
         # multi ip set
@@ -63,8 +64,8 @@ class WIZArgParser:
         group.add_argument('--gw', help='Gateway address')
         group.add_argument('--dns', help='DNS server address')
         
-        ### Channel 0 options
-        group = parser.add_argument_group('Channel #0 Options')
+        ### Channel 1 options
+        group = parser.add_argument_group('Channel #1 Options')
         group.add_argument('--port0', help='Local port number')
         group.add_argument('--nmode0', choices=['0', '1', '2', '3'],
                 help='Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)')
@@ -92,8 +93,8 @@ class WIZArgParser:
                 help='''TCP client reconnection interval value [TCP client only]\n(0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))''')
         # group.add_argument('--ec',  choices=['0','1'], help='UART Echoback function enable (Data UART port)')
 
-        ## Channel 1 options
-        group = parser.add_argument_group('Channel #1 Options')
+        ## Channel 2 options
+        group = parser.add_argument_group('Channel #2 Options')
         group.add_argument('--port1', help='Local port number')
         group.add_argument('--nmode1', choices=['0', '1', '2', '3'],
                 help='Network operation mode (0: tcpclient, 1: tcpserver, 2: mixed, 3: udp)')
@@ -138,4 +139,5 @@ class WIZArgParser:
         group.add_argument('--getfile', help='File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).')
 
         args = parser.parse_args()
+
         return args

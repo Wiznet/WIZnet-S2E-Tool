@@ -231,12 +231,14 @@ class TCPClient:
 		
 	def write(self, data):
 		self.sock.send(data)
-
 		
 	def close(self):
 		if self.sock is not 0:
-		    self.sock.close()
+			self.sock.close()
 		self.state = CLOSE_STATE
+	
+	def shutdown(self):
+		self.sock.shutdown(1)
 		
 # if __name__ == '__main__':
 # 	client = TCPClient()

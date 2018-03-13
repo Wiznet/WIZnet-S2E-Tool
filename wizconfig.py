@@ -28,7 +28,10 @@ OP_SETFILE = 4
 OP_GETFILE = 5
 OP_FWUP = 6
 
-BAUDRATES = [300, 600, 1200, 1800, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400]
+BAUDRATES = [300, 600, 1200, 1800, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800]
+
+cmd_oneport = ['MC','VR','MN','UN','UI','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP']
+cmd_twoport = ['MC','VR','MN','UN','UI','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP','QS','QO','QH','QP','QL','RV','RA','RE','RR','EI','EN','RS','EB','ED','EP','ES','EF','E0','E1','NT','NS','ND']
 
 class WIZMakeCMD:
     def search(self):
@@ -37,16 +40,10 @@ class WIZMakeCMD:
         # 장치 검색 시 필요 정보 Get
         cmd_list.append(["MA", "FF:FF:FF:FF:FF:FF"])
         cmd_list.append(["PW", " "])
-        cmd_list.append(["MC", ""])
-        cmd_list.append(["LI", ""])    # IP address
-        cmd_list.append(["VR", ""])
-        cmd_list.append(["MN", ""])
-        cmd_list.append(["RH", ""])
-        cmd_list.append(["RP", ""])
-        cmd_list.append(["OP", ""]) # Network operation mode
-        cmd_list.append(["IM", ""]) # IP address allocation method(Static/DHCP)
+        for cmd in cmd_oneport:
+            cmd_list.append([cmd, ""])
         return cmd_list
-    
+
     def get_value(self, mac_addr, filename):
         # 파일의 command들에 대한 정보를 가져옴
         cmd_list = []
@@ -73,6 +70,7 @@ class WIZMakeCMD:
                 getcmd_list.append(line[:2])
         for cmd in getcmd_list:
             cmd_list.append([cmd, ""])
+        
         cmd_list.append(["SV", ""])
         cmd_list.append(["RT", ""])
         f.close()
@@ -154,8 +152,6 @@ if __name__ == '__main__':
     conf_sock = WIZUDPSock(5000, 50001)
     conf_sock.open()
     wizmsghangler = WIZMSGHandler(conf_sock)
-
-    # FUObj = FWUpload(logging.DEBUG)
 
     cmd_list = []
     setcmd = {}
@@ -245,8 +241,8 @@ if __name__ == '__main__':
         # Command mode switch settings
         if args.te: setcmd['TE'] = args.te
         if args.ss: setcmd['SS'] = args.ss
-        ######################################################
         # print('%d, %s' % (len(setcmd), setcmd))
+
         # Check parameter
         setcmd_cmd = list(setcmd.keys())
         for i in range(len(setcmd)):
@@ -254,7 +250,7 @@ if __name__ == '__main__':
             if wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) is False:
                 sys.stdout.write("%s\nInvalid parameter: %s \nPlease refer to %s -h\r\n" % ('#'*25, setcmd.get(setcmd_cmd[i]), sys.argv[0]))
                 sys.exit(0)
-        ######################################################
+
         # ALL devices config
         if args.all or args.multiset:
             if not os.path.isfile('mac_list.txt'):
@@ -280,12 +276,6 @@ if __name__ == '__main__':
                 if args.fwfile:
                     op_code = OP_FWUP
                     print('[All] Device FW upload: device %d, %s' % (i+1, mac_addr))
-
-                    ## no thread
-                    # FUObj.setparam(mac_addr, args.fwfile)
-                    # FUObj.run()
-                    # time.sleep(1)
-                    ## threading
                     fwup_name = 't%d_fwup' % (i)
                     fwup_name = FWUploadThread()
                     fwup_name.setparam(mac_addr, args.fwfile)
@@ -336,13 +326,8 @@ if __name__ == '__main__':
                         print('[All][Getfile] Get device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
                         wizmsghangler.get_filelog(mac_addr)
                 # get config log
-                # wizmsghangler.makecommands(get_cmd_list, OP_GETCOMMAND)
-                # wizmsghangler.sendcommands()
-                # wizmsghangler.parseresponse()
-                
                 # wizmsghangler.get_log() 
 
-        ######################################################    
         # Single device config
         else:
             if args.fwfile:
@@ -375,7 +360,7 @@ if __name__ == '__main__':
                 print('* Single devcie config: %s' % mac_addr)
                 cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
                 get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
-            # print(get_cmd_list)
+                # print('get_cmd_list', get_cmd_list)
                     
         if args.all or args.multiset:
             if not args.fwfile:
@@ -409,6 +394,4 @@ if __name__ == '__main__':
             wizmsghangler.parseresponse()
             
             wizmsghangler.get_log()
-            
-
         
