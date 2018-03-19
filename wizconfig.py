@@ -368,11 +368,19 @@ if __name__ == '__main__':
                         th_config.SetMultiIP(host_ip)
                         th_config.start()
                     elif args.getfile:
-                        # op_code = OP_GETFILE
+                        op_code = OP_GETFILE
                         cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
 
-                        th_config = MultiConfigThread(mac_addr, cmd_list, OP_GETFILE)
-                        th_config.start()
+                        wizmsghangler.makecommands(cmd_list, op_code)
+                        wizmsghangler.sendcommands()
+                        wizmsghangler.parseresponse()
+                    elif args.setfile:
+                        op_code = OP_SETFILE
+                        print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
+                        cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
+                        
+                        wizmsghangler.makecommands(cmd_list, op_code)
+                        wizmsghangler.sendcommands()
                     else:
                         if args.reset:
                             print('[Multi] Reset devices %d: %s' % (i+1, mac_addr))
@@ -380,16 +388,11 @@ if __name__ == '__main__':
                         elif args.factory:
                             print('[Multi] Factory reset devices %d: %s' % (i+1, mac_addr))
                             cmd_list = wizmakecmd.factory_reset(mac_addr)
-                        elif args.setfile:
-                            # op_code = OP_SETFILE
-                            print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
-                            cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
                         else:
                             # op_code = OP_SETCOMMAND
                             print('[Multi] Setting devcies %d: %s' % (i+1, mac_addr))
                             cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
                             get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
-
                         th_config = MultiConfigThread(mac_addr, cmd_list, OP_SETCOMMAND)
                         th_config.start()
                     # print('<ALL> op_code %d, cmd_list: %s\n' % (op_code, cmd_list))
