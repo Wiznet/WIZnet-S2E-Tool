@@ -33,7 +33,6 @@ class WIZArgParser:
         parser.add_argument('-t', '--targetip', help='Target IP address')
         parser.add_argument('-r', '--retry', type=int, default=5, help='Test retry number (default: 5)')
         
-
         args = parser.parse_args()
         return args
 
@@ -55,6 +54,8 @@ class WIZArgParser:
         group.add_argument('-m', '--multiset', metavar='ipaddr', help='Set IP address for all devices in \'mac_list.txt\'. Parameter is first address.')
         # F/W upload
         group.add_argument('-u', '--upload', dest='fwfile', help='Firmware upload from file')
+        group.add_argument('--ab', action='store_true', help='Jump to app boot mode')
+        
         
         ## Network config
         group = parser.add_argument_group('General Options')
@@ -133,8 +134,6 @@ class WIZArgParser:
         group.add_argument('--dg', choices=['0','1'], help='Serial debug message enable (Debug UART port)')
 
         ## Config from file
-        group = parser.add_argument_group('\nConfiguration from File')
-
         group.add_argument('--setfile', help='File name to Set')
         group.add_argument('--getfile', help='File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).')
 

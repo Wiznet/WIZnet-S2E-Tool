@@ -54,6 +54,7 @@ class WIZMSGHandler:
         self.mode_list = []
         self.devname = []
         self.version = []
+        self.devst = []
 
         self.getreply = []
 
@@ -182,6 +183,10 @@ class WIZMSGHandler:
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
                             if b'VR' in replylists[i]:
                                 self.version.append(replylists[i][2:])
+
+                            if b'ST' in replylists[i]:
+                                self.devst.append(replylists[i][2:])
+                            
                             # if b'VR' in replylists[i] and b"1.1.2dev" in replylists[i][2:] :
                             #     self.mac_list.pop()     
                                 # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
@@ -229,6 +234,12 @@ class WIZMSGHandler:
                             # sys.stdout.write("%r\r\n" % replylists[i][:2])
 
                             if b'FW' in replylists[i][:2]:
+                                # sys.stdout.write('self.isvalid is True\r\n')
+                                param = replylists[i][2:].split(b':')
+                                self.reply = replylists[i][2:]
+
+                            # for Boot update
+                            elif b'BU' in replylists[i][:2]:
                                 # sys.stdout.write('self.isvalid is True\r\n')
                                 param = replylists[i][2:].split(b':')
                                 self.reply = replylists[i][2:]
