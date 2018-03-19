@@ -54,8 +54,6 @@ class WIZArgParser:
         group.add_argument('-m', '--multiset', metavar='ipaddr', help='Set IP address for all devices in \'mac_list.txt\'. Parameter is first address.')
         # F/W upload
         group.add_argument('-u', '--upload', dest='fwfile', help='Firmware upload from file')
-        group.add_argument('--ab', action='store_true', help='Jump to app boot mode')
-        
         
         ## Network config
         group = parser.add_argument_group('General Options')

@@ -147,10 +147,11 @@ class WIZMakeCMD:
         f.close()
 
 class UploadThread(threading.Thread):
-    def __init__(self, mac_addr):
+    def __init__(self, mac_addr, file_name):
         threading.Thread.__init__(self)
 
         self.mac_addr = mac_addr
+        self.filename = file_name
 
     def run(self):
         thread_list = []
@@ -167,7 +168,7 @@ class UploadThread(threading.Thread):
                 time.sleep(2)
                 # print('=================================>> APPBOOT:', self.mac_addr)
                 th_fwup = FWUploadThread()
-                th_fwup.setparam(self.mac_addr, 'W7500x_S2E_App_120.bin')
+                th_fwup.setparam(self.mac_addr, self.filename)
                 th_fwup.sendCmd('FW')
                 th_fwup.start()
                 th_fwup.join()
@@ -235,7 +236,7 @@ if __name__ == '__main__':
     update_state = DEV_STATE_IDLE
     # print(args)
 
-    if args.search or args.clear or args.ab:
+    if args.search or args.clear:
         if len(sys.argv) is not 2:
             print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
             sys.exit(0)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
 
     ## single or all device set
     # elif args.macaddr or args.all or args.search or args.multiset:
-    elif args.macaddr or args.all or args.search or args.multiset or args.ab :
+    elif args.macaddr or args.all or args.search or args.multiset:
         if args.macaddr:
             mac_addr = args.macaddr
             if wiz752cmdObj.isvalidparameter("MC", mac_addr) is False :
@@ -330,7 +331,7 @@ if __name__ == '__main__':
                 sys.exit(0)
 
         # ALL devices config
-        if args.all or args.multiset or args.ab:
+        if args.all or args.multiset:
             if not os.path.isfile('mac_list.txt'):
                 print('There is no mac_list.txt file. Please search devices first from \'-s/--search\' option.')
                 sys.exit(0)
@@ -355,13 +356,8 @@ if __name__ == '__main__':
                     op_code = OP_FWUP
                     print('[Multi] Device FW upload: device %d, %s' % (i+1, mac_addr))
                     fwup_name = 'th%d_fwup' % (i)
-                    fwup_name = UploadThread(mac_addr)
+                    fwup_name = UploadThread(mac_addr, args.fwfile)
                     fwup_name.start()
-                elif args.ab:
-                    ab_name = 't%d_ab' % (i)
-                    ab_name = FWUploadThread()
-                    ab_name.setparam(mac_addr, 'W7500x_S2E_App_120.bin')
-                    ab_name.jumpToApp()
                 else: 
                     if args.multiset:
                         th_config = MultiConfigThread(mac_addr, cmd_list, OP_SETCOMMAND)
@@ -378,7 +374,7 @@ if __name__ == '__main__':
                         op_code = OP_SETFILE
                         print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
                         cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
-                        
+
                         wizmsghangler.makecommands(cmd_list, op_code)
                         wizmsghangler.sendcommands()
                     else:
@@ -435,7 +431,7 @@ if __name__ == '__main__':
                 get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
                 # print('get_cmd_list', get_cmd_list)
                     
-        if args.all or args.multiset or args.ab:
+        if args.all or args.multiset:
             if args.fwfile or args.factory or args.reset:
                 pass
             else:
@@ -463,7 +459,7 @@ if __name__ == '__main__':
             wizmsghangler.get_filelog(mac_addr)
         elif op_code is OP_SETFILE:
             print('\nDevice configuration from \'%s\' complete!' % args.setfile)
-        elif args.multiset or args.factory or args.reset or args.ab:
+        elif args.multiset or args.factory or args.reset:
             pass
         elif op_code is OP_SETCOMMAND:
             if args.factory or args.reset:
