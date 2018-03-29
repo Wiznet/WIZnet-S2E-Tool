@@ -260,7 +260,7 @@ if __name__ == '__main__':
                 sys.exit(0)
         
         op_code = OP_SETCOMMAND
-        print('Devcie configuration start...\n')
+        print('Device configuration start...\n')
         # General config
         
         if args.alloc: setcmd['IM'] = args.alloc
@@ -386,7 +386,7 @@ if __name__ == '__main__':
                             cmd_list = wizmakecmd.factory_reset(mac_addr)
                         else:
                             # op_code = OP_SETCOMMAND
-                            print('[Multi] Setting devcies %d: %s' % (i+1, mac_addr))
+                            print('[Multi] Setting devices %d: %s' % (i+1, mac_addr))
                             cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
                             get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
                         th_config = MultiConfigThread(mac_addr, cmd_list, OP_SETCOMMAND)
@@ -426,7 +426,7 @@ if __name__ == '__main__':
                 print('[Getfile] Get device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
                 cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
             else:   
-                print('* Single devcie config: %s' % mac_addr)
+                print('* Single device config: %s' % mac_addr)
                 cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
                 get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
                 # print('get_cmd_list', get_cmd_list)
