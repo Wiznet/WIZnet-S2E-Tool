@@ -115,7 +115,7 @@ class FWUploadThread(threading.Thread):
             if self.resp is not '':
                 break
             time.sleep(1)
-        
+
     def run(self):
         if self.resp is not '':
             resp = self.resp.decode('utf-8')
@@ -126,7 +126,6 @@ class FWUploadThread(threading.Thread):
             self.serverport = int(params[1])
 
             # network reachable check
-            # os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
             os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
             ping_reponse = os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
             # ping_reponse = os.system('ping -n 1 ' + params[0])

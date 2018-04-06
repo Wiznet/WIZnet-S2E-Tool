@@ -137,6 +137,29 @@ class WIZMSGHandler:
     def sendcommands(self):
         self.sock.sendto(self.msg)
 
+
+    # Check the response (for setting / reset / factory)
+    def checkresponse(self):
+        readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
+
+        configreply = None
+        while True:
+            for sock in readready:
+                if sock == self.sock.sock:
+                    data = self.sock.recvfrom()
+                    configreply = data.splitlines()
+                    # print('config reply:', configreply)
+                    readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
+
+            if len(readready) == 0:
+                break
+
+        if configreply is not None:
+            return 1
+        else:
+            return -1
+
+
     def parseresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
         
@@ -250,6 +273,11 @@ class WIZMSGHandler:
 
         if self.opcode is OP_SEARCHALL:
             return len(self.mac_list)
+        elif self.opcode is OP_SETCOMMAND or self.opcode is OP_SETFILE:
+            if replylists is not None:
+                return True
+            else:
+                return -1
         elif self.opcode is OP_FWUP:
             return self.reply
         # sys.stdout.write("%s\r\n" % self.mac_list)
