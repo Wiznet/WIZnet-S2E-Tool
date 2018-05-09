@@ -24,6 +24,10 @@ class WIZ752CMDSET:
 							 "EN" : ["UART Interface(Str) for channel 1", "", {}, "RO"],
 							 "UI" : ["UART Interface(Code) for channel 0", "", {}, "RO"],
 							 "EI" : ["UART Interface(Code) for channel 1", "", {}, "RO"],
+							 # WIZ750SR: F/W 1.2.0 verison or later
+							"TR" : ["TCP Retransmission Retry count",
+									"^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-5][0-5])$", 
+									{}, "RW"], 
 							 "OP" : ["Network Operation Mode for channel 0",
 							 			"^[0-3]$", 
 							 			{"0": "TCP Client mode", "1" : "TCP Server mode", "2" : "TCP Mixed mode", "3" : "UDP mode"},

@@ -7,7 +7,6 @@ import struct
 import binascii
 import sys
 import getopt
-import logging
 import re
 import os
 from WIZ750CMDSET import WIZ750CMDSET
@@ -16,12 +15,15 @@ from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
 from FWUploadThread import *
+from WIZMakeCMD import *
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
+VERSION = 'v1.1.0'
+
 OP_SEARCHALL = 1
-OP_GETCOMMAND = 2
+OP_RESET = 2
 OP_SETCOMMAND = 3
 OP_SETFILE = 4
 OP_GETFILE = 5
@@ -33,125 +35,13 @@ DEV_STATE_APPUPDATED = 12
 DEV_STATE_BOOTUP = 13
 DEV_STATE_BOOTUPDATED = 14
 
-BAUDRATES = [300, 600, 1200, 1800, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800]
-
-cmd_oneport = ['MC','VR','MN','UN','UI','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP']
-cmd_twoport = ['MC','VR','MN','UN','UI','ST','IM','OP','DD','CP','PO','DG','KA','KI','KE','RI','LI','SM','GW','DS','PI','PP','DX','DP','DI','DW','DH','LP','RP','RH','BR','DB','PR','SB','FL','IT','PT','PS','PD','TE','SS','NP','SP','QS','QO','QH','QP','QL','RV','RA','RE','RR','EI','EN','RS','EB','ED','EP','ES','EF','E0','E1','NT','NS','ND']
-
-class WIZMakeCMD:
-    def search(self):
-        cmd_list = []
-        # Search All Devices on the network
-        # 장치 검색 시 필요 정보 Get
-        cmd_list.append(["MA", "FF:FF:FF:FF:FF:FF"])
-        cmd_list.append(["PW", " "])
-        for cmd in cmd_oneport:
-            cmd_list.append([cmd, ""])
-        return cmd_list
-
-    def get_value(self, mac_addr, filename):
-        # 파일의 command들에 대한 정보를 가져옴
-        cmd_list = []
-        f = open(filename, 'r')
-        cmd_list.append(["MA", mac_addr])
-        cmd_list.append(["PW", " "])
-        for line in f:
-#			print len(line), line.decode('hex')
-            if len(line) > 2 :
-                cmd_list.append([line[:2], ""])
-        f.close()
-        return cmd_list
-
-    def set_value(self, mac_addr, filename):
-        # 파일에서 cmd/parameter set 정보를 불러옴
-        cmd_list = []
-        f = open(filename, 'r')
-        cmd_list.append(["MA", mac_addr])
-        cmd_list.append(["PW", " "])
-        getcmd_list = []
-        for line in f:
-            if len(line) > 2:
-                cmd_list.append([line[:2], line[2:]])
-                getcmd_list.append(line[:2])
-        for cmd in getcmd_list:
-            cmd_list.append([cmd, ""])
-        
-        cmd_list.append(["SV", ""])
-        cmd_list.append(["RT", ""])
-        f.close()
-        return cmd_list
-
-    # Get device info
-    def getcommand(self, macaddr, command_list):
-        cmd_list = []    # 초기화
-        cmd_list.append(["MA", macaddr])
-        cmd_list.append(["PW", " "])
-        # cmd_list.append(["MC", ""])
-        for i in range(len(command_list)):
-            cmd_list.append([command_list[i], ""]) 
-        # cmd_list.append(["RT", ""])
-        return cmd_list
-
-    # Set device
-    def setcommand(self, macaddr, command_list, param_list):
-        cmd_list = []
-        try:
-            # print('Macaddr: %s' % macaddr)
-            cmd_list.append(["MA", macaddr])
-            cmd_list.append(["PW", " "])
-            # for set
-            for i in range(len(command_list)):
-                cmd_list.append([command_list[i], param_list[i]]) 
-            # for get
-            # for i in range(len(command_list)):
-            #     cmd_list.append([command_list[i], ""]) 
-            cmd_list.append(["SV", ""]) # save device setting
-            cmd_list.append(["RT", ""]) # Device reboot
-            return cmd_list
-        except Exception as e:
-            sys.stdout.write('%r\r\n' % e)            
-
-    def reset(self, mac_addr):
-        cmd_list = []
-        cmd_list.append(["MA", mac_addr])
-        cmd_list.append(["PW", " "])
-        cmd_list.append(["RT", ""])	
-        return cmd_list
-    
-    def factory_reset(self, mac_addr):
-        cmd_list = []
-        cmd_list.append(["MA", mac_addr])
-        cmd_list.append(["PW", " "])
-        cmd_list.append(["FR", ""])	
-        return cmd_list
-    
-    def set_maclist(self, mac_list, devname, version, status, ip_list):
-        try:
-            if os.path.isfile('mac_list.txt'):
-                f = open('mac_list.txt', 'r+')
-            else:
-                f = open('mac_list.txt', 'w+')
-            data = f.readlines()
-            # print('data', data)
-        except Exception as e:
-            sys.stdout.write(e)
-        for i in range(len(mac_list)):
-            print('* Device %d: %s [%s] | %s | %s | Version: %s ' % (i+1, mac_list[i].decode(), devname[i].decode(), ip_list[i].decode(), status[i].decode(), version[i].decode()))
-            # print('%s|%s|%s|%s' % (mac_list[i].decode(), devname[i].decode(), version[i].decode(), ip_list[i].decode()))
-            info = "%s\n" % (mac_list[i].decode())
-            if info in data:
-                pass
-            else:
-                print('New Device: %s' % mac_list[i].decode())
-                f.write(info)
-        f.close()
-
 class UploadThread(threading.Thread):
-    def __init__(self, mac_addr, file_name):
+    def __init__(self, mac_addr, idcode, file_name):
         threading.Thread.__init__(self)
 
         self.mac_addr = mac_addr
         self.filename = file_name
+        self.idcode = idcode
         
     def run(self):
         thread_list = []
@@ -164,7 +54,7 @@ class UploadThread(threading.Thread):
                 jumpToApp(self.mac_addr)
             elif update_state is DEV_STATE_APPBOOT:
                 time.sleep(2)
-                th_fwup = FWUploadThread()
+                th_fwup = FWUploadThread(self.idcode)
                 th_fwup.setparam(self.mac_addr, self.filename)
                 th_fwup.sendCmd('FW')
                 th_fwup.start()
@@ -172,7 +62,7 @@ class UploadThread(threading.Thread):
             update_state += 1
 
 class MultiConfigThread(threading.Thread):
-    def __init__(self, mac_addr, cmd_list, op_code):
+    def __init__(self, mac_addr, id_code, cmd_list, op_code):
         threading.Thread.__init__(self)
         
         conf_sock = WIZUDPSock(5000, 50001)
@@ -180,12 +70,13 @@ class MultiConfigThread(threading.Thread):
         self.wizmsghangler = WIZMSGHandler(conf_sock)
 
         self.mac_addr = mac_addr
+        self.id_code = id_code
         self.cmd_list = cmd_list
         self.configresult = None
         
-        self.op_code = OP_SETCOMMAND
+        self.op_code = op_code
     
-    def SetMultiIP(self, host_ip):
+    def set_multiip(self, host_ip):
         self.host_ip = host_ip
 
         dst_port = '5000'                            
@@ -198,10 +89,7 @@ class MultiConfigThread(threading.Thread):
         setcmd['GW'] = target_gw
         setcmd['LP'] = dst_port
         setcmd['OP'] = '1'
-        self.cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
-
-    def Checkresult(self):
-        return self.configresult
+        self.cmd_list = wizmakecmd.setcommand(mac_addr, self.id_code, list(setcmd.keys()), list(setcmd.values()))
 
     def run(self):
         # print('multiset cmd_list: ', self.cmd_list)
@@ -216,7 +104,116 @@ class MultiConfigThread(threading.Thread):
             if self.configresult < 0:
                 print('  [%s] Configuration failed. Please check the device.' % (self.mac_addr))
             else:
-                print('  [%s] Configuration success!' % (self.mac_addr))
+                if self.op_code is OP_RESET:
+                    pass
+                else:
+                    self.wizmsghangler.get_log(self.mac_addr)
+                    # print('  [%s] Configuration success!' % (self.mac_addr))
+
+def make_setcmd(arg):
+    setcmd = {}
+
+    # General config
+    if args.alloc: setcmd['IM'] = args.alloc
+    if args.ip:  setcmd['LI'] = args.ip
+    if args.subnet: setcmd['SM'] = args.subnet
+    if args.gw: setcmd['GW'] = args.gw
+    if args.dns: setcmd['DS'] = args.dns
+    
+    # Channel 0 config
+    if args.nmode0:  setcmd['OP'] = args.nmode0
+    if args.port0: setcmd['LP'] = args.port0
+    if args.rip0: setcmd['RH'] = args.rip0
+    if args.rport0: setcmd['RP'] = args.rport0
+
+    if args.baud0: setcmd['BR'] = str(BAUDRATES.index(args.baud0))
+    if args.data0: setcmd['DB'] = args.data0
+    if args.parity0: setcmd['PR'] = args.parity0
+    if args.stop0: setcmd['SB'] = args.stop0
+    if args.flow0: setcmd['FL'] = args.flow0
+    if args.time0: setcmd['PT'] = args.time0
+    if args.size0: setcmd['PS'] = args.size0
+    if args.char0: setcmd['PD'] = args.char0
+
+    if args.it: setcmd['IT'] = args.it
+    if args.ka: setcmd['KA'] = args.ka
+    if args.ki: setcmd['KI'] = args.ki
+    if args.ke: setcmd['KE'] = args.ke
+    if args.ri: setcmd['RI'] = args.ri
+
+    # Channel 1 config
+    if args.nmode1:  setcmd['QO'] = args.nmode1
+    if args.port1: setcmd['QL'] = args.port1
+    if args.rip1: setcmd['QH'] = args.rip1
+    if args.rport1: setcmd['QP'] = args.rport1
+
+    if args.baud1: setcmd['EB'] = str(BAUDRATES.index(args.baud1))
+    if args.data1: setcmd['ED'] = args.data1
+    if args.parity1: setcmd['EP'] = args.parity1
+    if args.stop1: setcmd['ES'] = args.stop1
+    if args.flow1: setcmd['EF'] = args.flow1
+    if args.time1: setcmd['NT'] = args.time1
+    if args.size1: setcmd['NS'] = args.size1
+    if args.char1: setcmd['ND'] = args.char1
+
+    if args.rv: setcmd['RV'] = args.rv
+    if args.ra: setcmd['RA'] = args.ra
+    if args.rs: setcmd['RS'] = args.rs
+    if args.re: setcmd['RE'] = args.re
+    if args.rr: setcmd['RR'] = args.rr
+    if args.tr: setcmd['TR'] = args.tr
+    
+    # Configs
+    if args.cp: setcmd['CP'] = args.cp
+    if args.np: setcmd['NP'] = args.np
+    if args.sp: setcmd['SP'] = args.sp
+    if args.dg: setcmd['DG'] = args.dg            
+    
+    # Command mode switch settings
+    if args.te: setcmd['TE'] = args.te
+    if args.ss: setcmd['SS'] = args.ss
+
+    # expansion GPIO
+    if args.ga: 
+        setcmd['CA'] = args.ga[0]
+        if args.ga[0] == '1' and args.ga[1] is not None:
+            setcmd['GA'] = args.ga[1]
+    elif args.gb: 
+        setcmd['CB'] = args.gb[0]
+        if args.gb[0] == '1' and args.gb[1] is not None:
+            setcmd['GB'] = args.gb[1]
+    elif args.gc: 
+        setcmd['CC'] = args.gc[0]
+        if args.gc[0] == '1' and args.gc[1] is not None:
+            setcmd['GC'] = args.gc[1]
+    elif args.gd: 
+        setcmd['CD'] = args.gd[0]
+        if args.gd[0] == '1' and args.gd[1] is not None:
+            setcmd['GD'] = args.gd[1]
+
+    # print('%d, %s' % (len(setcmd), setcmd))
+    return setcmd
+
+def make_maclist(mac_list, devname, version, status, ip_list):
+    try:
+        if os.path.isfile('mac_list.txt'):
+            f = open('mac_list.txt', 'r+')
+        else:
+            f = open('mac_list.txt', 'w+')
+        data = f.readlines()
+        # print('data', data)
+    except Exception as e:
+        sys.stdout.write(e)
+    for i in range(len(mac_list)):
+        print('* Device %d: %s [%s] | %s | %s | Version: %s ' % (i+1, mac_list[i].decode(), devname[i].decode(), ip_list[i].decode(), status[i].decode(), version[i].decode()))
+        # print('%s|%s|%s|%s' % (mac_list[i].decode(), devname[i].decode(), version[i].decode(), ip_list[i].decode()))
+        info = "%s\n" % (mac_list[i].decode())
+        if info in data:
+            pass
+        else:
+            print('New Device: %s' % mac_list[i].decode())
+            f.write(info)
+    f.close()
 
 if __name__ == '__main__':
     wizmakecmd = WIZMakeCMD()
@@ -240,10 +237,16 @@ if __name__ == '__main__':
     update_state = DEV_STATE_IDLE
     # print(args)
 
-    if args.search or args.clear:
-        if len(sys.argv) is not 2:
-            print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
-            sys.exit(0)
+    # search id code init
+    searchcode = ' '
+
+    if args.search or args.clear or args.version:
+        if args.search and args.password is not None:
+            pass
+        else:
+            if len(sys.argv) is not 2:
+                print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
+                sys.exit(0)
     else:
         if len(sys.argv) < 3:
             print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
@@ -254,8 +257,10 @@ if __name__ == '__main__':
         f = open('mac_list.txt', 'w')
         f.close()
 
-    ## single or all device set
-    # elif args.macaddr or args.all or args.search or args.multiset:
+    if args.version:
+        print('WIZnet-S2E-Tool %s' % VERSION)
+
+    # Configuration (single or multi)
     elif args.macaddr or args.all or args.search or args.multiset:
         if args.macaddr:
             mac_addr = args.macaddr
@@ -265,66 +270,14 @@ if __name__ == '__main__':
         
         op_code = OP_SETCOMMAND
         print('Devcie configuration start...\n')
-        # General config
-        
-        if args.alloc: setcmd['IM'] = args.alloc
-        if args.ip:  setcmd['LI'] = args.ip
-        if args.subnet: setcmd['SM'] = args.subnet
-        if args.gw: setcmd['GW'] = args.gw
-        if args.dns: setcmd['DS'] = args.dns
-        
-        # Channel 0 config
-        if args.nmode0:  setcmd['OP'] = args.nmode0
-        if args.port0: setcmd['LP'] = args.port0
-        if args.rip0: setcmd['RH'] = args.rip0
-        if args.rport0: setcmd['RP'] = args.rport0
 
-        if args.baud0: setcmd['BR'] = str(BAUDRATES.index(args.baud0))
-        if args.data0: setcmd['DB'] = args.data0
-        if args.parity0: setcmd['PR'] = args.parity0
-        if args.stop0: setcmd['SB'] = args.stop0
-        if args.flow0: setcmd['FL'] = args.flow0
-        if args.time0: setcmd['PT'] = args.time0
-        if args.size0: setcmd['PS'] = args.size0
-        if args.char0: setcmd['PD'] = args.char0
+        setcmd = make_setcmd(args)
 
-        if args.it: setcmd['IT'] = args.it
-        if args.ka: setcmd['KA'] = args.ka
-        if args.ki: setcmd['KI'] = args.ki
-        if args.ke: setcmd['KE'] = args.ke
-        if args.ri: setcmd['RI'] = args.ri
-
-        # Channel 1 config
-        if args.nmode1:  setcmd['QO'] = args.nmode1
-        if args.port1: setcmd['QL'] = args.port1
-        if args.rip1: setcmd['QH'] = args.rip1
-        if args.rport1: setcmd['QP'] = args.rport1
-
-        if args.baud1: setcmd['EB'] = str(BAUDRATES.index(args.baud1))
-        if args.data1: setcmd['ED'] = args.data1
-        if args.parity1: setcmd['EP'] = args.parity1
-        if args.stop1: setcmd['ES'] = args.stop1
-        if args.flow1: setcmd['EF'] = args.flow1
-        if args.time1: setcmd['NT'] = args.time1
-        if args.size1: setcmd['NS'] = args.size1
-        if args.char1: setcmd['ND'] = args.char1
-
-        if args.rv: setcmd['RV'] = args.rv
-        if args.ra: setcmd['RA'] = args.ra
-        if args.rs: setcmd['RS'] = args.rs
-        if args.re: setcmd['RE'] = args.re
-        if args.rr: setcmd['RR'] = args.rr
-        
-        # Configs
-        if args.cp: setcmd['CP'] = args.cp
-        if args.np: setcmd['NP'] = args.np
-        if args.sp: setcmd['SP'] = args.sp
-        if args.dg: setcmd['DG'] = args.dg            
-        
-        # Command mode switch settings
-        if args.te: setcmd['TE'] = args.te
-        if args.ss: setcmd['SS'] = args.ss
-        # print('%d, %s' % (len(setcmd), setcmd))
+        # search id code (parameter of 'PW')
+        if args.password:
+            searchcode = args.password
+        else:
+            searchcode = ' '
 
         # Check parameter
         setcmd_cmd = list(setcmd.keys())
@@ -359,17 +312,17 @@ if __name__ == '__main__':
                     op_code = OP_FWUP
                     print('[Multi] Device FW upload: device %d, %s' % (i+1, mac_addr))
                     fwup_name = 'th%d_fwup' % (i)
-                    fwup_name = UploadThread(mac_addr, args.fwfile)
+                    fwup_name = UploadThread(mac_addr, searchcode, args.fwfile)
                     fwup_name.start()
                 else: 
                     if args.multiset:
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(mac_addr, cmd_list, OP_SETCOMMAND)
-                        th_name.SetMultiIP(host_ip)
+                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETCOMMAND)
+                        th_name.set_multiip(host_ip)
                         th_name.start()
                     elif args.getfile:
                         op_code = OP_GETFILE
-                        cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
+                        cmd_list = wizmakecmd.get_from_file(mac_addr, searchcode, args.getfile)
 
                         wizmsghangler.makecommands(cmd_list, op_code)
                         wizmsghangler.sendcommands()
@@ -377,36 +330,36 @@ if __name__ == '__main__':
                     elif args.setfile:
                         op_code = OP_SETFILE
                         print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
-                        cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
-                        th_setfile = MultiConfigThread(mac_addr, cmd_list, OP_SETFILE)
+                        cmd_list = wizmakecmd.set_from_file(mac_addr, searchcode, args.setfile)
+                        th_setfile = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETFILE)
                         th_setfile.start()
                     else:
                         if args.reset:
+                            op_code = OP_RESET
                             print('[Multi] Reset devices %d: %s' % (i+1, mac_addr))
-                            cmd_list = wizmakecmd.reset(mac_addr)
+                            cmd_list = wizmakecmd.reset(mac_addr, searchcode)
                         elif args.factory:
+                            op_code = OP_RESET
                             print('[Multi] Factory reset devices %d: %s' % (i+1, mac_addr))
-                            cmd_list = wizmakecmd.factory_reset(mac_addr)
+                            cmd_list = wizmakecmd.factory_reset(mac_addr, searchcode)
                         else:
-                            # op_code = OP_SETCOMMAND
+                            op_code = OP_SETCOMMAND
                             print('[Multi] Setting devcies %d: %s' % (i+1, mac_addr))
-                            cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
-                            get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
+                            cmd_list = wizmakecmd.setcommand(mac_addr, searchcode, list(setcmd.keys()), list(setcmd.values()))
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(mac_addr, cmd_list, OP_SETCOMMAND)
+                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, op_code)
                         th_name.start()
-
-                    # print('<ALL> op_code %d, cmd_list: %s\n' % (op_code, cmd_list))
+                        time.sleep(0.3)
                     if args.getfile:
                         print('[Multi][Getfile] Get device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
                         wizmsghangler.get_filelog(mac_addr)
 
-        ## Single device config
+        # Single device config
         else:
             if args.fwfile:
                 op_code = OP_FWUP
                 print('Device %s Firmware upload' % mac_addr)
-                t_fwup = FWUploadThread()
+                t_fwup = FWUploadThread(searchcode)
                 t_fwup.setparam(mac_addr, args.fwfile)
                 t_fwup.jumpToApp()
                 time.sleep(2)
@@ -415,39 +368,34 @@ if __name__ == '__main__':
             elif args.search:
                 op_code = OP_SEARCHALL
                 print('Start to Search devices...')
-                cmd_list = wizmakecmd.search()
+                cmd_list = wizmakecmd.search(searchcode)
             elif args.reset:
                 op_code = OP_SETCOMMAND
                 print('Device %s Reset' % mac_addr)
-                cmd_list = wizmakecmd.reset(mac_addr)
+                cmd_list = wizmakecmd.reset(mac_addr, searchcode)
             elif args.factory:
                 op_code = OP_SETCOMMAND
                 print('Device %s Factory reset' % mac_addr)
-                cmd_list = wizmakecmd.factory_reset(mac_addr)
+                cmd_list = wizmakecmd.factory_reset(mac_addr, searchcode)
             elif args.setfile:
                 op_code = OP_SETFILE
                 print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
-                cmd_list = wizmakecmd.set_value(mac_addr, args.setfile)
+                cmd_list = wizmakecmd.set_from_file(mac_addr, searchcode, args.setfile)
             elif args.getfile:
                 op_code = OP_GETFILE
                 print('[Getfile] Get device [%s] info from \'%s\' commands\n' % (mac_addr, args.getfile))
-                cmd_list = wizmakecmd.get_value(mac_addr, args.getfile)
+                cmd_list = wizmakecmd.get_from_file(mac_addr, searchcode, args.getfile)
             else:   
                 op_code = OP_SETCOMMAND
                 print('* Single devcie config: %s' % mac_addr)
-                cmd_list = wizmakecmd.setcommand(mac_addr, list(setcmd.keys()), list(setcmd.values()))
-                get_cmd_list = wizmakecmd.getcommand(mac_addr, list(setcmd.keys()))
-                # print('get_cmd_list', get_cmd_list)
+                cmd_list = wizmakecmd.setcommand(mac_addr, searchcode, list(setcmd.keys()), list(setcmd.values()))
                     
         if args.all or args.multiset:
             if args.fwfile or args.factory or args.reset:
                 pass
-            else:
-                print('Configuration result:')
         elif args.fwfile:
             pass
         else:
-            # print('<SINGLE> op_code %d, cmd_list: %s' % (op_code, cmd_list))
             wizmsghangler.makecommands(cmd_list, op_code)
             wizmsghangler.sendcommands()
             conf_result = wizmsghangler.parseresponse()
@@ -460,25 +408,20 @@ if __name__ == '__main__':
         dev_version = wizmsghangler.version
         dev_status = wizmsghangler.devst
         ip_list = wizmsghangler.ip_list
-        wizmakecmd.set_maclist(mac_list, dev_name, dev_version, dev_status, ip_list)
+        make_maclist(mac_list, dev_name, dev_version, dev_status, ip_list)
         print('\nRefer to \'mac_list.txt\' file')
     elif not args.all:
         if op_code is OP_GETFILE:
             wizmsghangler.get_filelog(mac_addr)
         elif op_code is OP_SETFILE:
             print('\nDevice configuration from \'%s\' complete!' % args.setfile)
+            wizmsghangler.get_log(mac_addr)
         elif args.multiset or args.factory or args.reset:
             pass
         elif op_code is OP_SETCOMMAND:
             if conf_result < 0:
                 print('\nWarning: No response from the device [%s]. Please check the device\'s status.' % mac_addr)
             else:
-                print('\nDevice configuration complete!')
-
-            # print('get_cmd_list: %s' % get_cmd_list)
-            # wizmsghangler.makecommands(get_cmd_list, OP_GETCOMMAND)
-            # wizmsghangler.sendcommands()
-            # wizmsghangler.parseresponse()
-
-            # wizmsghangler.get_log()
+                print('\nDevice[%s] configuration complete!' % (mac_addr))
+                wizmsghangler.get_log(mac_addr)
         

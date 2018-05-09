@@ -44,9 +44,12 @@ class WIZArgParser:
         parser.add_argument('-d', '--device', dest='macaddr', help='Device mac address to configuration')
         parser.add_argument('-a', '--all', action='store_true', help='Configuration about all devices (in mac_list.txt)')
         parser.add_argument('-c', '--clear', action='store_true', help='Mac list clear')
+        parser.add_argument('-v', '--version', action='store_true', help='Version information')
 
         group = parser.add_argument_group('Configuration')
         group.add_argument('-s', '--search', action='store_true', help='Search devices (in same network)') 
+        # group.add_argument('-s', '--search', nargs='?', const=True, help='Search the devices. If using search ID code, set parameter.') 
+        group.add_argument('-p', '--password', help='Search Id code (password)')
         
         group.add_argument('-r', '--reset', action='store_true', help='Reboot device')
         group.add_argument('-f', '--factory', action='store_true', help='Factory reset')
@@ -100,7 +103,7 @@ class WIZArgParser:
         group.add_argument('--rip1', metavar='IP', help='Remote host IP address / Domain')
         group.add_argument('--rport1', metavar='PORT', help='Remote host port number')
         
-        group.add_argument('--baud1', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400)')
+        group.add_argument('--baud1', type=int, help='baud rate (300|600|1200|1800|2400|4800|9600|14400|19200|28800|38400|57600|115200|230400|460800)')
         group.add_argument('--data1', choices=['0','1'], help='data bit (0: 7-bit, 1: 8-bit)')
         group.add_argument('--parity1', choices=['0','1','2'], help='parity bit (0: NONE, 1: ODD, 2: EVEN)')
         group.add_argument('--stop1', choices=['0','1'], help='stop bit (0: 1-bit, 1: 2-bit)')
@@ -118,6 +121,7 @@ class WIZArgParser:
                 help='''TCP Keep-alive packet transmission retry interval value\n(0: Not use / 1~65535: Keep-alive packet transmission retry interval (Unit: millisecond))''')
         group.add_argument('--rr', metavar='number', 
                 help='''TCP client reconnection interval value [TCP client only]\n(0: Not use / 1~65535: TCP client reconnection interval (Unit: millisecond))''')
+        group.add_argument('--tr', metavar='count', help='TCP Retransmisstion Retry count (1~255)')
         
         ## Command mode switch settings
         group = parser.add_argument_group('UART Command mode switch settings')
@@ -131,9 +135,18 @@ class WIZArgParser:
         group.add_argument('--sp', metavar='value', help='Search identification code (string, up to 8 bytes / default: None)')
         group.add_argument('--dg', choices=['0','1'], help='Serial debug message enable (Debug UART port)')
 
+        ## Extention GPIO configs
+        group = parser.add_argument_group('Extention GPIO configurations (Digital out mode need value)\n\t\t\t(0: Digital in / 1: Digital Out(need value) / 2: Analog in)')
+        # (0: Digital in / 1: Digital Out / 2: Analog input)
+        group.add_argument('--ga', nargs='*', metavar='val', help='Expantion GPIO A config')
+        group.add_argument('--gb', nargs='*', metavar='val', help='Expantion GPIO B config')
+        group.add_argument('--gc', nargs='*', metavar='val', help='Expantion GPIO C config')
+        group.add_argument('--gd', nargs='*', metavar='val', help='Expantion GPIO D config')
+
         ## Config from file
+        group = parser.add_argument_group('Get/Set from file')
         group.add_argument('--setfile', help='File name to Set')
-        group.add_argument('--getfile', help='File name to Get info. Refer default command(cmd_oneport.txt or cmd_twoport.txt).')
+        group.add_argument('--getfile', help='File name to Get info. Refer default command (cmd_oneport.txt or cmd_twoport.txt).')
 
         args = parser.parse_args()
 

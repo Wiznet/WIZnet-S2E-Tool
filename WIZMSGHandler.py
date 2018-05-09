@@ -17,19 +17,12 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-exitflag = 0
-
 OP_SEARCHALL = 1
-OP_GETCOMMAND = 2
+OP_RESET = 2
 OP_SETCOMMAND = 3
 OP_SETFILE = 4
 OP_GETFILE = 5
 OP_FWUP = 6
-
-def timeout_func():
-#	print('timeout')
-    global exitflag
-    exitflag = 1
 
 class WIZMSGHandler:
     def __init__(self, udpsock):
@@ -58,51 +51,18 @@ class WIZMSGHandler:
 
         self.getreply = []
 
-        # self.exitflag = None
-
     def timeout_func(self):
     	# print('timeout')
-        # self.exitflag = 1
         self.istimeout = True        
 
     def getmacaddr(self, index):
         if len(self.mac_list) >= (index + 1):
             mac_addr = self.mac_list[index]
-            # print (mac_addr)
             for i in range(5, 1):
                 mac_addr[i*2:] = ":" + mac_addr[i*2:]
-            # print (mac_addr)
             return mac_addr
         else:
             sys.stdout.write("index is out of range\r\n")
-            return None
-    
-    # Get IP address
-    def getipaddr(self, index):
-        if len(self.ip_list) >= (index + 1):
-            ip_addr = self.ip_list[index]
-            print(ip_addr)
-            return ip_addr
-        else:
-            print('getipaddr: index is out of range')
-            return None
-
-    def getopmode(self, index):
-        if len(self.mode_list) >= (index + 1):
-            opmode = self.mode_list[index]
-            # print('getopmode:', opmode)
-            return opmode
-        else:
-            print('getopmode: index is out of range')
-            return None
-
-    def getipmode(self, index):
-        if len(self.ip_mode) >= (index + 1):
-            ipmode = self.ip_mode[index]
-            # print('getipmode:', ipmode)
-            return ipmode
-        else:
-            print('getipmode: index is out of range')
             return None
 
     def makecommands(self, cmd_list, op_code):
@@ -132,33 +92,28 @@ class WIZMSGHandler:
                 self.msg[self.size:] = str.encode("\r\n")
                 self.size += 2
 
-#			print(self.size, self.msg)
-
     def sendcommands(self):
         self.sock.sendto(self.msg)
 
-
-    # Check the response (for setting / reset / factory)
+    # Check the response
     def checkresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
 
-        configreply = None
+        self.getreply = None
         while True:
             for sock in readready:
                 if sock == self.sock.sock:
                     data = self.sock.recvfrom()
-                    configreply = data.splitlines()
+                    self.getreply = data.splitlines()
                     # print('config reply:', configreply)
                     readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
 
             if len(readready) == 0:
                 break
-
-        if configreply is not None:
+        if self.getreply is not None:
             return 1
         else:
             return -1
-
 
     def parseresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
@@ -170,7 +125,7 @@ class WIZMSGHandler:
         # t.start()
         
         replylists = None
-        self.getreply = []
+        self.getreply = None
 
         while True:
             self.iter += 1
@@ -180,10 +135,6 @@ class WIZMSGHandler:
                 self.timer1.cancel()
                 self.istimeout = False
                 break
-
-            # if(exitflag) :
-            #     t.cancel()
-            #     # exitflag = 0
             
             for sock in readready:
                 if sock == self.sock.sock :
@@ -194,52 +145,14 @@ class WIZMSGHandler:
 
                     if self.opcode is OP_SEARCHALL:
                         for i in range(0, len(replylists)):
-                            if b'MC' in replylists[i] :
-                                self.mac_list.append(replylists[i][2:])
-                                # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if b'MN' in replylists[i]:
-                                self.devname.append(replylists[i][2:])
-                                #  sys.stdout.write("Device name: %r\r\n" % (replylists[i][2:]))
-                            # if 'MN' in replylists[i] and "WIZ752SR-12x" not in replylists[i][2:] :
-                            # if 'MN' in replylists[i] and "WIZ750SR" not in replylists[i][2:] :
-                            #     self.mac_list.pop()
-                                # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if b'VR' in replylists[i]:
-                                self.version.append(replylists[i][2:])
-
-                            if b'ST' in replylists[i]:
-                                self.devst.append(replylists[i][2:])
-                            
-                            # if b'VR' in replylists[i] and b"1.1.2dev" in replylists[i][2:] :
-                            #     self.mac_list.pop()     
-                                # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
-                            if b'OP' in replylists[i]:
-                                self.mode_list.append(replylists[i][2:])
-                            if b'LI' in replylists[i]:
-                                self.ip_list.append(replylists[i][2:]) 
-                                # print('ip_list', self.ip_list)
-                                # sys.stdout.write("iter count: %r, %r\r\n" % (self.iter, replylists[i][2:]))
+                            if b'MC' in replylists[i]: self.mac_list.append(replylists[i][2:]) 
+                            if b'MN' in replylists[i]: self.devname.append(replylists[i][2:])
+                            if b'VR' in replylists[i]: self.version.append(replylists[i][2:])
+                            if b'ST' in replylists[i]: self.devst.append(replylists[i][2:])
+                            if b'OP' in replylists[i]: self.mode_list.append(replylists[i][2:])
+                            if b'LI' in replylists[i]: self.ip_list.append(replylists[i][2:]) 
                             if b'IM' in replylists[i]:
                                 self.ip_mode.append(replylists[i][2:])
-                    elif self.opcode is OP_GETCOMMAND:
-                        pass
-                        # for i in range(0, len(replylists)):
-                        #     sys.stdout.write("%r\r\n" % replylists[i])
-
-                    elif self.opcode is OP_SETCOMMAND:
-                        pass
-                        # for i in range(0, len(replylists)):
-                        #     sys.stdout.write("%r\r\n" % replylists[i])
-
-                    elif self.opcode is OP_SETFILE:
-                        pass
-                        # for i in range(0, len(replylists)):
-                        #     sys.stdout.write("%r\r\n" % replylists[i])
-
-                    elif self.opcode is OP_GETFILE:
-                        pass
-                        # for i in range(0, len(replylists)):
-                        #     sys.stdout.write("%r\r\n" % replylists[i])
                         
                     elif self.opcode is OP_FWUP:
                         for i in range(0, len(replylists)):
@@ -248,12 +161,9 @@ class WIZMSGHandler:
                             if b'MA' in replylists[i][:2]:
                                 dest_mac = self.dest_mac
                                 reply_mac = replylists[i][2:]
-                                # sys.stdout.write('dest_mac: %r\r\n' % dest_mac)
-                                # sys.stdout.write('reply_mac: %r\r\n' % reply_mac)
                                 # self.isvalid = True
                             else:
                                 self.isvalid = False
-
                             # sys.stdout.write("%r\r\n" % replylists[i][:2])
 
                             if b'FW' in replylists[i][:2]:
@@ -267,8 +177,6 @@ class WIZMSGHandler:
                                 param = replylists[i][2:].split(b':')
                                 self.reply = replylists[i][2:]
 
-                            # sys.stdout.write("%r\r\n" % replylists[i])
-
                     readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
 
         if self.opcode is OP_SEARCHALL:
@@ -276,27 +184,27 @@ class WIZMSGHandler:
         elif self.opcode is OP_SETCOMMAND or self.opcode is OP_SETFILE:
             if replylists is not None:
                 return True
+                # return self.getreply
             else:
                 return -1
         elif self.opcode is OP_FWUP:
             return self.reply
         # sys.stdout.write("%s\r\n" % self.mac_list)
 
-    def get_log(self):
-        if len(self.getreply) > 0:        
-            print('Configuration result: ')
+    def get_log(self, mac_addr):
+        if self.getreply is not None:
+            print('[%s] Setting result: ' % (mac_addr))
             # print('getreply: %s' % self.getreply)
             cmdsetObj = WIZ752CMDSET(logging.ERROR)
             for i in range(2, len(self.getreply)):
-                getcmd = self.getreply[i][:2]
-                cmd = getcmd.decode('utf-8')
-                getparam = self.getreply[i][2:]
-                param = getparam.decode('utf-8')
-
+                cmd = self.getreply[i][:2].decode()
+                param = self.getreply[i][2:].decode()
                 cmd_desc = cmdsetObj.getcmddescription(cmd)
                 param_desc = cmdsetObj.getparamdescription(cmd, param)
                 conf_info = "    %02d) %s: %-17s | %s: %s\r\n" % (i-1, cmd, param, cmd_desc, param_desc)
                 sys.stdout.write('%s' % conf_info)
+        else:
+            pass
 
     def get_filelog(self, macaddr):
         filename = None

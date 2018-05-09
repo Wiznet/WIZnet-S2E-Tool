@@ -251,7 +251,6 @@ if __name__ == '__main__':
         lastnumindex = dst_ip.rfind('.')
         lastnum = int(dst_ip[lastnumindex + 1:len(dst_ip)])
 
-
     # filename = strftime("%d-%b-%Y", localtime()) + '_log.txt'
     # fd = open(filename, 'w')
 
@@ -268,7 +267,6 @@ if __name__ == '__main__':
             end_flag = not end_flag
             for i in range(len(threads)):
                 end_flag &= not threads[i].is_alive()
-
 
     except (KeyboardInterrupt, SystemExit):
         for i in range(dst_num):

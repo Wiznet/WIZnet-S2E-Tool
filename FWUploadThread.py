@@ -42,7 +42,7 @@ def jumpToApp(mac_addr):
     print('[%s] Jump to app boot mode' % mac_addr)
 
     cmd_list.append(["MA", mac_addr])
-    cmd_list.append(["PW", " "])
+    cmd_list.append(["PW", self.idcode])
     cmd_list.append(["AB", ""])
     wizmsghangler.makecommands(cmd_list, OP_FWUP)
     wizmsghangler.sendcommands()
@@ -50,7 +50,7 @@ def jumpToApp(mac_addr):
 class FWUploadThread(threading.Thread):
     # initialization
     # def __init__(self, log_level):
-    def __init__(self):
+    def __init__(self, idcode):
         threading.Thread.__init__(self)
 
         self.dest_mac = None
@@ -62,6 +62,7 @@ class FWUploadThread(threading.Thread):
         self.istimeout = 0
         self.serverip = None
         self.serverport = None
+        self.idcode = idcode
 
         self.sentbyte = 0
 
@@ -90,7 +91,7 @@ class FWUploadThread(threading.Thread):
         print('[%s] Jump to app boot mode' % self.dest_mac)
 
         cmd_list.append(["MA", self.dest_mac])
-        cmd_list.append(["PW", " "])
+        cmd_list.append(["PW", self.idcode])
         cmd_list.append(["AB", ""])
         self.wizmsghangler.makecommands(cmd_list, OP_FWUP)
         self.wizmsghangler.sendcommands()
@@ -103,7 +104,7 @@ class FWUploadThread(threading.Thread):
 
         # Send FW UPload request message
         cmd_list.append(["MA", self.dest_mac])
-        cmd_list.append(["PW", " "])
+        cmd_list.append(["PW", self.idcode])
         cmd_list.append([command, str(len(self.data))])
         # sys.stdout.write("cmd_list: %s\r\n" % cmd_list)
         self.wizmsghangler.makecommands(cmd_list, OP_FWUP)
