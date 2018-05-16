@@ -42,7 +42,7 @@ def jumpToApp(mac_addr):
     print('[%s] Jump to app boot mode' % mac_addr)
 
     cmd_list.append(["MA", mac_addr])
-    cmd_list.append(["PW", self.idcode])
+    cmd_list.append(["PW", " "])
     cmd_list.append(["AB", ""])
     wizmsghangler.makecommands(cmd_list, OP_FWUP)
     wizmsghangler.sendcommands()
