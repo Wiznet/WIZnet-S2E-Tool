@@ -46,7 +46,7 @@ if __name__=='__main__':
 
         ###################################
         # Search All Devices on the network
-        cmd_list = wizmakecmd.search()
+        cmd_list = wizmakecmd.search(" ")
         # sys.stdout.write("%s\r\n" % cmd_list)
         wizmsghangler.makecommands(cmd_list, OP_SEARCHALL)
         wizmsghangler.sendcommands()

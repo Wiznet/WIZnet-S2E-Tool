@@ -124,7 +124,8 @@ class TCPClientThread(threading.Thread):
                         try:
                             if self.trycount is not -1 and self.totaltrycount >= self.trycount:
                                 break
-                            self.client.write(msg)
+                            # self.client.write(msg)
+                            self.client.sendto(msg)
                             logmsg = msg.decode()
                             logstr = '[' + self.serverip + '] sent ' + logmsg + '\r\n'
                             sys.stdout.write(logstr)
