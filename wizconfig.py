@@ -9,6 +9,7 @@ import sys
 import getopt
 import re
 import os
+import subprocess
 from WIZ750CMDSET import WIZ750CMDSET
 from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
@@ -16,11 +17,12 @@ from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
 from FWUploadThread import *
 from WIZMakeCMD import *
+from wizsocket.TCPClient import TCPClient
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-VERSION = 'v1.1.0'
+VERSION = 'v1.1.1 dev'
 
 OP_SEARCHALL = 1
 OP_RESET = 2
@@ -34,6 +36,88 @@ DEV_STATE_APPBOOT = 11
 DEV_STATE_APPUPDATED = 12
 DEV_STATE_BOOTUP = 13
 DEV_STATE_BOOTUPDATED = 14
+
+SOCK_CLOSE_STATE = 1
+SOCK_OPENTRY_STATE = 2
+SOCK_OPEN_STATE = 3
+SOCK_CONNECTTRY_STATE = 4
+SOCK_CONNECT_STATE = 5
+
+
+# Socket Config
+def net_check_ping(dst_ip):
+        serverip = dst_ip
+        do_ping = subprocess.Popen("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + serverip, 
+                                    stdout=None, stderr=None, shell=True)
+        ping_response = do_ping.wait()
+        # print('ping_response', ping_response)
+        return ping_response
+
+def connect_over_tcp(serverip, port):
+    retrynum = 0
+    tcp_sock = TCPClient(2, serverip, port)
+    # print('sock state: %r' % (tcp_sock.state))
+
+    while True:
+        if retrynum > 6:
+            break
+        retrynum += 1
+
+        if tcp_sock.state is SOCK_CLOSE_STATE:
+            # tcp_sock.shutdown()
+            cur_state = tcp_sock.state
+            try:
+                tcp_sock.open()
+                if tcp_sock.state is SOCK_OPEN_STATE:
+                    print('[%r] is OPEN' % (serverip))
+                time.sleep(0.2)
+            except Exception as e:
+                sys.stdout.write('%r\r\n' % e)
+        elif tcp_sock.state is SOCK_OPEN_STATE:
+            cur_state = tcp_sock.state
+            try:
+                tcp_sock.connect()
+                if tcp_sock.state is SOCK_CONNECT_STATE:
+                    print('[%r] is CONNECTED' % (serverip))
+            except Exception as e:
+                sys.stdout.write('%r\r\n' % e)
+        elif tcp_sock.state is SOCK_CONNECT_STATE:
+            break
+    if retrynum > 6:
+        print('Device [%s] TCP connection failed.\r\n' % (serverip))
+        return None
+    else:
+        print('Device [%s] TCP connected\r\n' % (serverip))
+        return tcp_sock
+
+def socket_config(net_opt, serverip=None, port=None):
+    # Broadcast
+    # if broadcast.isChecked() or unicast_mac.isChecked():
+    if net_opt == 'udp':
+        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock.open()
+
+    # TCP unicast
+    elif net_opt == 'tcp':
+        ip_addr = serverip
+        port = int(port)
+        print('unicast: ip: %r, port: %r' % (ip_addr, port))
+
+        # network check
+        net_response = net_check_ping(ip_addr)
+
+        if net_response == 0:
+            conf_sock = connect_over_tcp(ip_addr, port)
+
+            if conf_sock is None:
+                print('TCP connection failed!: %s' % conf_sock)
+                sys.exit(0)
+        else:
+            print('TCP unicast: Devcie connection failed.')
+            sys.exit(0)
+
+    return conf_sock
+
 
 class UploadThread(threading.Thread):
     def __init__(self, mac_addr, idcode, file_name):
@@ -51,7 +135,7 @@ class UploadThread(threading.Thread):
             if update_state is DEV_STATE_IDLE:
                 print('[Firmware upload] device %s' % (mac_addr))
                 # For jump to boot mode
-                jumpToApp(self.mac_addr)
+                jumpToApp(self.mac_addr, self.idcode)
             elif update_state is DEV_STATE_APPBOOT:
                 time.sleep(2)
                 th_fwup = FWUploadThread(self.idcode)
@@ -73,7 +157,6 @@ class MultiConfigThread(threading.Thread):
         self.id_code = id_code
         self.cmd_list = cmd_list
         self.configresult = None
-        
         self.op_code = op_code
     
     def set_multiip(self, host_ip):
@@ -194,7 +277,26 @@ def make_setcmd(arg):
     # print('%d, %s' % (len(setcmd), setcmd))
     return setcmd
 
-def make_maclist(mac_list, devname, version, status, ip_list):
+def make_profile(mac_list, devname, version, status, ip_list, target):
+    profiles = {}
+    for i in range(len(mac_list)):
+        # === mac_addr : [name, ipaddr, status, version]
+        profiles[mac_list[i].decode()] = [devname[i].decode(), ip_list[i].decode(), status[i].decode(), version[i].decode()]
+
+    if target is True:
+        print('@ Search target: All')
+        pass
+    else:
+        print('@ Search target: %s' % target)
+        for macaddr in mac_list:
+            if target not in profiles[macaddr.decode()]:
+                profiles.pop(macaddr.decode())
+
+    # print('====> make_profile', profiles)
+    print('\nSearch result: %d devices are detected\n' % (len(profiles)))
+    return profiles
+
+def make_maclist(profiles):
     try:
         if os.path.isfile('mac_list.txt'):
             f = open('mac_list.txt', 'r+')
@@ -204,15 +306,17 @@ def make_maclist(mac_list, devname, version, status, ip_list):
         # print('data', data)
     except Exception as e:
         sys.stdout.write(e)
-    for i in range(len(mac_list)):
-        print('* Device %d: %s [%s] | %s | %s | Version: %s ' % (i+1, mac_list[i].decode(), devname[i].decode(), ip_list[i].decode(), status[i].decode(), version[i].decode()))
-        # print('%s|%s|%s|%s' % (mac_list[i].decode(), devname[i].decode(), version[i].decode(), ip_list[i].decode()))
-        info = "%s\n" % (mac_list[i].decode())
+
+    num = 1
+    for mac_addr in list(profiles.keys()):
+        print('* Device %d: %s [%s] | %s | %s | Version: %s ' % (num, mac_addr, profiles[mac_addr][0], profiles[mac_addr][1], profiles[mac_addr][2], profiles[mac_addr][3]))
+        info = "%s\n" % (mac_addr)
         if info in data:
             pass
         else:
-            print('New Device: %s' % mac_list[i].decode())
+            print('\tNew Device: %s' % mac_addr)
             f.write(info)
+        num += 1
     f.close()
 
 if __name__ == '__main__':
@@ -220,6 +324,7 @@ if __name__ == '__main__':
 
     wizarg = WIZArgParser()
     args = wizarg.config_arg()
+    # print(args)
 
     # wiz750cmdObj = WIZ750CMDSET(1)
     wiz752cmdObj = WIZ752CMDSET(1)
@@ -231,33 +336,29 @@ if __name__ == '__main__':
     cmd_list = []
     setcmd = {}
     op_code = OP_SEARCHALL
-
-    thread_list = []
-
     update_state = DEV_STATE_IDLE
-    # print(args)
 
-    # search id code init
+    # Search id code init
     searchcode = ' '
 
-    if args.search or args.clear or args.version:
-        if args.search and args.password is not None:
-            pass
-        else:
-            if len(sys.argv) is not 2:
-                print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
-                sys.exit(0)
-    else:
-        if len(sys.argv) < 3:
-            print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
-            sys.exit(0)
+    # if args.search or args.clear or args.version:
+    #     if args.search and args.password is not None:
+    #         pass
+    #     else:
+    #         if len(sys.argv) is not 2:
+    #             print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
+    #             sys.exit(0)
+    # else:
+    #     if len(sys.argv) < 3:
+    #         print('Invalid argument. Please refer to %s -h\n' % sys.argv[0])
+    #         sys.exit(0)
 
     if args.clear:
         print('Mac list clear')
         f = open('mac_list.txt', 'w')
         f.close()
 
-    if args.version:
+    elif args.version:
         print('WIZnet-S2E-Tool %s' % VERSION)
 
     # Configuration (single or multi)
@@ -398,18 +499,26 @@ if __name__ == '__main__':
         else:
             wizmsghangler.makecommands(cmd_list, op_code)
             wizmsghangler.sendcommands()
-            conf_result = wizmsghangler.parseresponse()
+            if op_code is OP_SETCOMMAND:
+                conf_result = wizmsghangler.checkresponse()
+            else:
+                conf_result = wizmsghangler.parseresponse()
+    else: 
+        print('\nInformation: You need to set up target device(s).\n \
+           You can set the multi device in \'mac_list.txt\' with the \'-a\' option or set single device with the \'-d\' option.\n \
+           Please refer to %s -h\n' % sys.argv[0])
+        sys.exit(0)
 
     if args.search:
-        print('\nSearch result: ' + str(conf_result) + ' devices are detected')
         # print(wizmsghangler.mac_list)
         dev_name = wizmsghangler.devname
         mac_list = wizmsghangler.mac_list
         dev_version = wizmsghangler.version
         dev_status = wizmsghangler.devst
         ip_list = wizmsghangler.ip_list
-        make_maclist(mac_list, dev_name, dev_version, dev_status, ip_list)
-        print('\nRefer to \'mac_list.txt\' file')
+        profiles = make_profile(mac_list, dev_name, dev_version, dev_status, ip_list, args.search)
+        make_maclist(profiles)
+        print('\nRefer to \'mac_list.txt\' file for a list of searched devices.\n@ mac list file will be used when multi-device configuration.')
     elif not args.all:
         if op_code is OP_GETFILE:
             wizmsghangler.get_filelog(mac_addr)

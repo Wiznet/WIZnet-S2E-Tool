@@ -31,7 +31,7 @@ SOCK_CONNECT_STATE = 5
 idle_state = 1
 datasent_state = 2
 
-def jumpToApp(mac_addr):
+def jumpToApp(mac_addr, idcode):
     cmd_list = []
 
     conf_sock = WIZUDPSock(5000, 50001)
@@ -42,14 +42,13 @@ def jumpToApp(mac_addr):
     print('[%s] Jump to app boot mode' % mac_addr)
 
     cmd_list.append(["MA", mac_addr])
-    cmd_list.append(["PW", " "])
+    cmd_list.append(["PW", idcode])
     cmd_list.append(["AB", ""])
     wizmsghangler.makecommands(cmd_list, OP_FWUP)
     wizmsghangler.sendcommands()
 
 class FWUploadThread(threading.Thread):
     # initialization
-    # def __init__(self, log_level):
     def __init__(self, idcode):
         threading.Thread.__init__(self)
 

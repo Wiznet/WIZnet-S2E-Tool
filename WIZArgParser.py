@@ -47,9 +47,11 @@ class WIZArgParser:
         parser.add_argument('-v', '--version', action='store_true', help='Version information')
 
         group = parser.add_argument_group('Configuration')
-        group.add_argument('-s', '--search', action='store_true', help='Search devices (in same network)') 
+        # group.add_argument('-s', '--search', action='store_true', help='Search devices (in same network)') 
+        group.add_argument('-s', '--search', nargs='?', const=True, help='Search devices in same network. If you want to find specific device name, set parameter to device name.') 
         # group.add_argument('-s', '--search', nargs='?', const=True, help='Search the devices. If using search ID code, set parameter.') 
         group.add_argument('-p', '--password', help='Search Id code (password)')
+        group.add_argument('--unicast', help='TCP unicast search. parameter is IP:Port. (ex. --unicast 10.0.0.10:50001) 50001 is default.')
         
         group.add_argument('-r', '--reset', action='store_true', help='Reboot device')
         group.add_argument('-f', '--factory', action='store_true', help='Factory reset')
