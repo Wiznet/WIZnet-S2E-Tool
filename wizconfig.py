@@ -43,6 +43,7 @@ SOCK_OPEN_STATE = 3
 SOCK_CONNECTTRY_STATE = 4
 SOCK_CONNECT_STATE = 5
 
+SOCK_TYPE = 'udp'
 
 # Socket Config
 def net_check_ping(dst_ip):
@@ -146,12 +147,17 @@ class UploadThread(threading.Thread):
             update_state += 1
 
 class MultiConfigThread(threading.Thread):
-    def __init__(self, mac_addr, id_code, cmd_list, op_code):
+    def __init__(self, sock_type, mac_addr, id_code, cmd_list, op_code):
         threading.Thread.__init__(self)
         
-        conf_sock = WIZUDPSock(5000, 50001)
-        conf_sock.open()
-        self.wizmsghangler = WIZMSGHandler(conf_sock)
+        # TODO: add tcp unicast
+        if sock_type == 'udp':
+            conf_sock = socket_config(SOCK_TYPE)
+        else:
+            ipaddr, port = get_netarg(args.unicast)
+            conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
+
+        self.wizmsghangler = WIZMSGHandler(conf_sock, SOCK_TYPE)
 
         self.mac_addr = mac_addr
         self.id_code = id_code
@@ -178,7 +184,10 @@ class MultiConfigThread(threading.Thread):
         # print('multiset cmd_list: ', self.cmd_list)
         # print('RUN: Multiconfig device: %s' % (mac_addr))
         self.wizmsghangler.makecommands(self.cmd_list, self.op_code)
-        self.wizmsghangler.sendcommands()
+        if SOCK_TYPE == 'udp':
+            self.wizmsghangler.sendcommands()
+        else:
+            self.wizmsghangler.sendcommandsTCP()
         if self.op_code is OP_GETFILE:
             self.wizmsghangler.parseresponse()
         else:
@@ -319,19 +328,52 @@ def make_maclist(profiles):
         num += 1
     f.close()
 
+def get_netarg(arg):
+    # TODO: net argument validation check
+    # validation check 
+    ip_range = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+    port_range = "^([0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9][0-9][0-9]|65[0-4][0-9][0-9]|655[0-2][0-9]|6553[0-5])$"
+    
+    ipaddr = None
+    port = None
+
+    print('>>> arg: ', arg)
+
+    if ':' in arg:
+        param = arg.split(':')
+        ipaddr = param[0]
+        port = param[1]
+    else:
+        # default port for search: 50001
+        ipaddr = arg
+        port = 50001
+
+    return ipaddr, port
+
 if __name__ == '__main__':
     wizmakecmd = WIZMakeCMD()
 
     wizarg = WIZArgParser()
     args = wizarg.config_arg()
-    # print(args)
+    print(args)
 
     # wiz750cmdObj = WIZ750CMDSET(1)
     wiz752cmdObj = WIZ752CMDSET(1)
 
-    conf_sock = WIZUDPSock(5000, 50001)
-    conf_sock.open()
-    wizmsghangler = WIZMSGHandler(conf_sock)
+    if args.unicast is None:
+        SOCK_TYPE = 'udp'
+    else:
+        SOCK_TYPE = 'tcp'
+
+    # Socket config
+    if args.unicast is None:
+        conf_sock = socket_config(SOCK_TYPE)
+    else:
+        # ip & port parameter check
+        ipaddr, port = get_netarg(args.unicast)
+        conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
+
+    wizmsghangler = WIZMSGHandler(conf_sock, SOCK_TYPE)
 
     cmd_list = []
     setcmd = {}
@@ -418,7 +460,7 @@ if __name__ == '__main__':
                 else: 
                     if args.multiset:
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETCOMMAND)
+                        th_name = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, OP_SETCOMMAND)
                         th_name.set_multiip(host_ip)
                         th_name.start()
                     elif args.getfile:
@@ -426,13 +468,16 @@ if __name__ == '__main__':
                         cmd_list = wizmakecmd.get_from_file(mac_addr, searchcode, args.getfile)
 
                         wizmsghangler.makecommands(cmd_list, op_code)
-                        wizmsghangler.sendcommands()
+                        if SOCK_TYPE == 'udp':
+                            wizmsghangler.sendcommands()
+                        else:
+                            wizmsghangler.sendcommandsTCP()
                         wizmsghangler.parseresponse()
                     elif args.setfile:
                         op_code = OP_SETFILE
                         print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
                         cmd_list = wizmakecmd.set_from_file(mac_addr, searchcode, args.setfile)
-                        th_setfile = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETFILE)
+                        th_setfile = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, OP_SETFILE)
                         th_setfile.start()
                     else:
                         if args.reset:
@@ -448,7 +493,7 @@ if __name__ == '__main__':
                             print('[Multi] Setting devcies %d: %s' % (i+1, mac_addr))
                             cmd_list = wizmakecmd.setcommand(mac_addr, searchcode, list(setcmd.keys()), list(setcmd.values()))
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, op_code)
+                        th_name = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, op_code)
                         th_name.start()
                         time.sleep(0.3)
                     if args.getfile:
@@ -498,7 +543,10 @@ if __name__ == '__main__':
             pass
         else:
             wizmsghangler.makecommands(cmd_list, op_code)
-            wizmsghangler.sendcommands()
+            if SOCK_TYPE == 'udp':
+                wizmsghangler.sendcommands()
+            else:
+                wizmsghangler.sendcommandsTCP()
             if op_code is OP_SETCOMMAND:
                 conf_result = wizmsghangler.checkresponse()
             else:

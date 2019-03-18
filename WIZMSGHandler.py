@@ -10,8 +10,8 @@ import binascii
 import select
 import sys
 import codecs
-from WIZ750CMDSET import WIZ750CMDSET 
-from WIZ752CMDSET import WIZ752CMDSET 
+from WIZ750CMDSET import WIZ750CMDSET
+from WIZ752CMDSET import WIZ752CMDSET
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -24,9 +24,11 @@ OP_SETFILE = 4
 OP_GETFILE = 5
 OP_FWUP = 6
 
+
 class WIZMSGHandler:
-    def __init__(self, udpsock):
-        self.sock = udpsock
+    def __init__(self, sock, sock_type):
+        self.sock = sock
+        self.sock_type = sock_type
         self.msg = bytearray(1024)
         self.size = 0
 
@@ -52,8 +54,8 @@ class WIZMSGHandler:
         self.getreply = []
 
     def timeout_func(self):
-    	# print('timeout')
-        self.istimeout = True        
+        # print('timeout')
+        self.istimeout = True
 
     def getmacaddr(self, index):
         if len(self.mac_list) >= (index + 1):
@@ -79,13 +81,13 @@ class WIZMSGHandler:
                 # print(cmd[1])
                 # hex_string = cmd[1].decode('hex')
                 hex_string = codecs.decode(cmd[1], 'hex')
-                
+
                 self.msg[self.size:] = hex_string
                 self.dest_mac = hex_string
                 # self.dest_mac = (int(cmd[1], 16)).to_bytes(6, byteorder='big') # Hexadecimal string to hexadecimal binary
                 # self.msg[self.size:] = self.dest_mac
                 self.size += 6
-            else :
+            else:
                 self.msg[self.size:] = str.encode(cmd[1])
                 self.size += len(cmd[1])
             if not "\r\n" in cmd[1]:
@@ -94,6 +96,9 @@ class WIZMSGHandler:
 
     def sendcommands(self):
         self.sock.sendto(self.msg)
+
+    def sendcommandsTCP(self):
+        self.sock.write(self.msg)
 
     # Check the response
     def checkresponse(self):
@@ -117,13 +122,13 @@ class WIZMSGHandler:
 
     def parseresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
-        
+
         self.timer1 = Timer(2.0, self.timeout_func)
         self.timer1.start()
-        
+
         # t = Timer(3.0, timeout_func)
         # t.start()
-        
+
         replylists = None
         self.getreply = None
 
@@ -135,9 +140,9 @@ class WIZMSGHandler:
                 self.timer1.cancel()
                 self.istimeout = False
                 break
-            
+
             for sock in readready:
-                if sock == self.sock.sock :
+                if sock == self.sock.sock:
                     data = self.sock.recvfrom()
                     replylists = data.splitlines()
                     # print('replylists', replylists)
@@ -145,15 +150,21 @@ class WIZMSGHandler:
 
                     if self.opcode is OP_SEARCHALL:
                         for i in range(0, len(replylists)):
-                            if b'MC' in replylists[i]: self.mac_list.append(replylists[i][2:]) 
-                            if b'MN' in replylists[i]: self.devname.append(replylists[i][2:])
-                            if b'VR' in replylists[i]: self.version.append(replylists[i][2:])
-                            if b'ST' in replylists[i]: self.devst.append(replylists[i][2:])
-                            if b'OP' in replylists[i]: self.mode_list.append(replylists[i][2:])
-                            if b'LI' in replylists[i]: self.ip_list.append(replylists[i][2:]) 
+                            if b'MC' in replylists[i]:
+                                self.mac_list.append(replylists[i][2:])
+                            if b'MN' in replylists[i]:
+                                self.devname.append(replylists[i][2:])
+                            if b'VR' in replylists[i]:
+                                self.version.append(replylists[i][2:])
+                            if b'ST' in replylists[i]:
+                                self.devst.append(replylists[i][2:])
+                            if b'OP' in replylists[i]:
+                                self.mode_list.append(replylists[i][2:])
+                            if b'LI' in replylists[i]:
+                                self.ip_list.append(replylists[i][2:])
                             if b'IM' in replylists[i]:
                                 self.ip_mode.append(replylists[i][2:])
-                        
+
                     elif self.opcode is OP_FWUP:
                         for i in range(0, len(replylists)):
                             # sys.stdout.write('%s\r\n' % replylists)
@@ -235,10 +246,10 @@ class WIZMSGHandler:
                 # info = "%02d) %s: %s\r\n" % (i-1, cmd_desc, param_desc)
                 f.write(info)
             f.close()
-        
+
         if filename is not None:
             f = open(filename, 'r')
             readinfo = f.read()
-            print(readinfo)       
-            
+            print(readinfo)
+
             print('@ Refer to \"%s\" for detail.\n' % filename)
