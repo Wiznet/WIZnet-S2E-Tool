@@ -26,9 +26,8 @@ OP_FWUP = 6
 
 
 class WIZMSGHandler:
-    def __init__(self, sock, sock_type):
+    def __init__(self, sock):
         self.sock = sock
-        self.sock_type = sock_type
         self.msg = bytearray(1024)
         self.size = 0
 

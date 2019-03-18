@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+from wizsocket.TCPClient import TCPClient
+from WIZUDPSock import WIZUDPSock
+from WIZMSGHandler import WIZMSGHandler
+import binascii
 import re
 import sys
 import io
@@ -10,10 +14,6 @@ import getopt
 import os
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
-import binascii
-from WIZMSGHandler import WIZMSGHandler
-from WIZUDPSock import WIZUDPSock
-from wizsocket.TCPClient import TCPClient
 
 OP_SEARCHALL = 1
 OP_SETIP = 2
@@ -31,11 +31,10 @@ SOCK_CONNECT_STATE = 5
 idle_state = 1
 datasent_state = 2
 
-def jumpToApp(mac_addr, idcode):
+
+def jumpToApp(mac_addr, idcode, conf_sock, sock_type):
     cmd_list = []
 
-    conf_sock = WIZUDPSock(5000, 50001)
-    conf_sock.open()
     wizmsghangler = WIZMSGHandler(conf_sock)
 
     # boot mode change: App boot mode
@@ -45,11 +44,15 @@ def jumpToApp(mac_addr, idcode):
     cmd_list.append(["PW", idcode])
     cmd_list.append(["AB", ""])
     wizmsghangler.makecommands(cmd_list, OP_FWUP)
-    wizmsghangler.sendcommands()
+    if self.sock_type == 'udp':
+        self.wizmsghangler.sendcommands()
+    else:
+        self.wizmsghangler.sendcommandsTCP()
+
 
 class FWUploadThread(threading.Thread):
     # initialization
-    def __init__(self, idcode):
+    def __init__(self, idcode, conf_sock, sock_type):
         threading.Thread.__init__(self)
 
         self.dest_mac = None
@@ -65,8 +68,8 @@ class FWUploadThread(threading.Thread):
 
         self.sentbyte = 0
 
-        conf_sock = WIZUDPSock(5000, 50001)
-        conf_sock.open()
+        self.conf_sock = conf_sock
+        self.sock_type = sock_type
         self.wizmsghangler = WIZMSGHandler(conf_sock)
 
     def setparam(self, dest_mac, binaryfile):
@@ -93,7 +96,15 @@ class FWUploadThread(threading.Thread):
         cmd_list.append(["PW", self.idcode])
         cmd_list.append(["AB", ""])
         self.wizmsghangler.makecommands(cmd_list, OP_FWUP)
-        self.wizmsghangler.sendcommands()
+        if self.sock_type == 'udp':
+            self.wizmsghangler.sendcommands()
+        else:
+            self.wizmsghangler.sendcommandsTCP()
+
+            if self.conf_sock is not None:
+                self.conf_sock.shutdown()
+            time.sleep(1)
+
         # print('jumpToApp cmd_list: %s' % cmd_list)
 
     # def run(self):
@@ -110,7 +121,10 @@ class FWUploadThread(threading.Thread):
 
         # if no reponse from device, retry for several times.
         for i in range(3):
-            self.wizmsghangler.sendcommands()
+            if self.sock_type == 'udp':
+                self.wizmsghangler.sendcommands()
+            else:
+                self.wizmsghangler.sendcommandsTCP()
             self.resp = self.wizmsghangler.parseresponse()
             if self.resp is not '':
                 break
@@ -126,13 +140,15 @@ class FWUploadThread(threading.Thread):
             self.serverport = int(params[1])
 
             # network reachable check
-            os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
-            ping_reponse = os.system("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + self.serverip)
+            os.system("ping " + ("-n 1 " if sys.platform.lower() == "win32" else "-c 1 ") + self.serverip)
+            ping_reponse = os.system("ping " + ("-n 1 " if sys.platform.lower()
+                                                == "win32" else "-c 1 ") + self.serverip)
             # ping_reponse = os.system('ping -n 1 ' + params[0])
             if ping_reponse == 0:
                 print('Device[%s] network OK' % self.dest_mac)
             else:
-                print('<Ping Error>: Device[%s]: %s is unreachable.\n\tRefer --multiset or --ip options to set IP address.' % (self.dest_mac, self.serverip))
+                print(
+                    '<Ping Error>: Device[%s]: %s is unreachable.\n\tRefer --multiset or --ip options to set IP address.' % (self.dest_mac, self.serverip))
                 sys.exit(0)
         else:
             print('@@@@@ Device[%s]: No response from device. Check the network or device status.' % (self.dest_mac))
@@ -193,15 +209,17 @@ class FWUploadThread(threading.Thread):
                                     self.client.write(msg)
                                     self.sentbyte = 1024
                                     # sys.stdout.write('1024 bytes sent from at %r\r\n' % (self.curr_ptr))
-                                    sys.stdout.write('[%s] 1024 bytes sent from at %r\r\n' % (self.serverip, self.curr_ptr))
+                                    sys.stdout.write('[%s] 1024 bytes sent from at %r\r\n' %
+                                                     (self.serverip, self.curr_ptr))
                                     self.curr_ptr += 1024
                                     self.remainbytes -= 1024
-                                else :
+                                else:
                                     msg = bytearray(self.remainbytes)
                                     msg[:] = self.data[self.curr_ptr:self.curr_ptr+self.remainbytes]
                                     self.client.write(msg)
                                     # sys.stdout.write('Last %r byte sent from at %r \r\n' % (self.remainbytes, self.curr_ptr))
-                                    sys.stdout.write('[%s] Last %r byte sent from at %r \r\n' % (self.serverip, self.remainbytes, self.curr_ptr))
+                                    sys.stdout.write('[%s] Last %r byte sent from at %r \r\n' %
+                                                     (self.serverip, self.remainbytes, self.curr_ptr))
                                     self.curr_ptr += self.remainbytes
                                     self.remainbytes = 0
                                     self.sentbyte = self.remainbytes
@@ -219,7 +237,8 @@ class FWUploadThread(threading.Thread):
                                         self.timer1.cancel()
                                         self.istimeout = 0
                                     else:
-                                        print('>>>>>>>>> ERROR: Device[%s]: No response from device. Stop FW upload...' % self.dest_mac)
+                                        print(
+                                            '>>>>>>>>> ERROR: Device[%s]: No response from device. Stop FW upload...' % self.dest_mac)
                                         self.client.close()
                                         sys.exit(0)
 
@@ -233,12 +252,14 @@ class FWUploadThread(threading.Thread):
                         sys.stdout.write('%r\r\n' % e)
                         response = ""
                     break
-            
+
             if self.retrycheck > 20:
-                sys.stdout.write('Device [%s] firmware upload fail. (file: %s)\r\n' % (self.dest_mac, self.bin_filename))
+                sys.stdout.write('Device [%s] firmware upload fail. (file: %s)\r\n' %
+                                 (self.dest_mac, self.bin_filename))
             else:
-                sys.stdout.write('Device [%s] firmware upload success! (file: %s)\r\n' % (self.dest_mac, self.bin_filename))
-            # for send FIN packet 
+                sys.stdout.write('Device [%s] firmware upload success! (file: %s)\r\n' %
+                                 (self.dest_mac, self.bin_filename))
+            # for send FIN packet
             time.sleep(1)
             self.client.shutdown()
         except (KeyboardInterrupt, SystemExit):
@@ -246,7 +267,8 @@ class FWUploadThread(threading.Thread):
         finally:
             pass
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hm:b:")

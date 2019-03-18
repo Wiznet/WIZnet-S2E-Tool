@@ -15,14 +15,14 @@ from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
-from FWUploadThread import *
+from FWUploadThread import FWUploadThread, jumpToApp
 from WIZMakeCMD import *
 from wizsocket.TCPClient import TCPClient
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-VERSION = 'v1.1.1 dev'
+VERSION = 'v1.2.0 develop'
 
 OP_SEARCHALL = 1
 OP_RESET = 2
@@ -45,14 +45,16 @@ SOCK_CONNECT_STATE = 5
 
 SOCK_TYPE = 'udp'
 
+args = None
+
 # Socket Config
 def net_check_ping(dst_ip):
-        serverip = dst_ip
-        do_ping = subprocess.Popen("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + serverip, 
-                                    stdout=None, stderr=None, shell=True)
-        ping_response = do_ping.wait()
-        # print('ping_response', ping_response)
-        return ping_response
+    serverip = dst_ip
+    do_ping = subprocess.Popen("ping " + ("-n 1 " if sys.platform.lower()=="win32" else "-c 1 ") + serverip, 
+                                stdout=None, stderr=None, shell=True)
+    ping_response = do_ping.wait()
+    # print('ping_response', ping_response)
+    return ping_response
 
 def connect_over_tcp(serverip, port):
     retrynum = 0
@@ -91,9 +93,17 @@ def connect_over_tcp(serverip, port):
         print('Device [%s] TCP connected\r\n' % (serverip))
         return tcp_sock
 
+def socket_close(sock):
+    print("====> socket_close() #1", sock)
+    
+    if sock is not None:
+        if sock.state is not SOCK_CLOSE_STATE:
+            sock.shutdown()
+
+    print("====> socket_close() #2", sock)
+
 def socket_config(net_opt, serverip=None, port=None):
     # Broadcast
-    # if broadcast.isChecked() or unicast_mac.isChecked():
     if net_opt == 'udp':
         conf_sock = WIZUDPSock(5000, 50001)
         conf_sock.open()
@@ -136,11 +146,21 @@ class UploadThread(threading.Thread):
             if update_state is DEV_STATE_IDLE:
                 print('[Firmware upload] device %s' % (mac_addr))
                 # For jump to boot mode
-                jumpToApp(self.mac_addr, self.idcode)
+                jumpToApp(self.mac_addr, self.idcode, conf_sock, SOCK_TYPE)
             elif update_state is DEV_STATE_APPBOOT:
                 time.sleep(2)
-                th_fwup = FWUploadThread(self.idcode)
+                th_fwup = FWUploadThread(self.idcode, conf_sock, SOCK_TYPE)
                 th_fwup.setparam(self.mac_addr, self.filename)
+                
+                # socket 
+                if SOCK_TYPE == 'udp':
+                    pass
+                else:
+                    socket_close(conf_sock)
+                    # ip & port parameter check
+                    ipaddr, port = get_netarg(args.unicast)
+                    conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
+
                 th_fwup.sendCmd('FW')
                 th_fwup.start()
                 th_fwup.join()
@@ -157,7 +177,7 @@ class MultiConfigThread(threading.Thread):
             ipaddr, port = get_netarg(args.unicast)
             conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
 
-        self.wizmsghangler = WIZMSGHandler(conf_sock, SOCK_TYPE)
+        self.wizmsghangler = WIZMSGHandler(conf_sock)
 
         self.mac_addr = mac_addr
         self.id_code = id_code
@@ -373,7 +393,7 @@ if __name__ == '__main__':
         ipaddr, port = get_netarg(args.unicast)
         conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
 
-    wizmsghangler = WIZMSGHandler(conf_sock, SOCK_TYPE)
+    wizmsghangler = WIZMSGHandler(conf_sock)
 
     cmd_list = []
     setcmd = {}
@@ -448,6 +468,7 @@ if __name__ == '__main__':
                 if wiz752cmdObj.isvalidparameter("LI", host_ip) is False:
                     sys.stdout.write("Invalid IP address!\r\n")
                     sys.exit(0)
+
             for i in range(len(mac_list)):
                 mac_addr = re.sub('[\r\n]', '', mac_list[i])
                 # print(mac_addr)
@@ -505,10 +526,20 @@ if __name__ == '__main__':
             if args.fwfile:
                 op_code = OP_FWUP
                 print('Device %s Firmware upload' % mac_addr)
-                t_fwup = FWUploadThread(searchcode)
+                t_fwup = FWUploadThread(searchcode, conf_sock, SOCK_TYPE)
                 t_fwup.setparam(mac_addr, args.fwfile)
                 t_fwup.jumpToApp()
-                time.sleep(2)
+
+                # socket 
+                if SOCK_TYPE == 'udp':
+                    pass
+                else:
+                    socket_close(conf_sock)
+                    time.sleep(2)
+                    # ip & port parameter check
+                    ipaddr, port = get_netarg(args.unicast)
+                    conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
+
                 t_fwup.sendCmd('FW')
                 t_fwup.start()
             elif args.search:
