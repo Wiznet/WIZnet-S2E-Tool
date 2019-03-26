@@ -375,7 +375,7 @@ if __name__ == '__main__':
 
     wizarg = WIZArgParser()
     args = wizarg.config_arg()
-    print(args)
+    # print(args)
 
     # wiz750cmdObj = WIZ750CMDSET(1)
     wiz752cmdObj = WIZ752CMDSET(1)
