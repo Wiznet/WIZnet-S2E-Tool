@@ -35,6 +35,7 @@ datasent_state = 2
 def jumpToApp(mac_addr, idcode, conf_sock, sock_type):
     cmd_list = []
 
+    conf_sock.open()
     wizmsghangler = WIZMSGHandler(conf_sock)
 
     # boot mode change: App boot mode
@@ -44,10 +45,10 @@ def jumpToApp(mac_addr, idcode, conf_sock, sock_type):
     cmd_list.append(["PW", idcode])
     cmd_list.append(["AB", ""])
     wizmsghangler.makecommands(cmd_list, OP_FWUP)
-    if self.sock_type == 'udp':
-        self.wizmsghangler.sendcommands()
+    if sock_type == 'udp':
+        wizmsghangler.sendcommands()
     else:
-        self.wizmsghangler.sendcommandsTCP()
+        wizmsghangler.sendcommandsTCP()
 
 
 class FWUploadThread(threading.Thread):
@@ -68,8 +69,9 @@ class FWUploadThread(threading.Thread):
 
         self.sentbyte = 0
 
-        self.conf_sock = conf_sock
         self.sock_type = sock_type
+        self.conf_sock = conf_sock
+        conf_sock.open()
         self.wizmsghangler = WIZMSGHandler(conf_sock)
 
     def setparam(self, dest_mac, binaryfile):

@@ -22,7 +22,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-VERSION = 'v1.2.0 develop'
+VERSION = 'v1.1.2 dev'
 
 OP_SEARCHALL = 1
 OP_RESET = 2
@@ -131,7 +131,7 @@ def socket_config(net_opt, serverip=None, port=None):
 
 
 class UploadThread(threading.Thread):
-    def __init__(self, mac_addr, idcode, file_name):
+    def __init__(self, conf_sock, mac_addr, idcode, file_name):
         threading.Thread.__init__(self)
 
         self.mac_addr = mac_addr
@@ -142,41 +142,29 @@ class UploadThread(threading.Thread):
         thread_list = []
         update_state = DEV_STATE_IDLE
 
+        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock.open()
+
         while update_state <= DEV_STATE_APPUPDATED:
             if update_state is DEV_STATE_IDLE:
                 print('[Firmware upload] device %s' % (mac_addr))
                 # For jump to boot mode
-                jumpToApp(self.mac_addr, self.idcode, conf_sock, SOCK_TYPE)
+                jumpToApp(self.mac_addr, self.idcode, conf_sock, 'udp')
             elif update_state is DEV_STATE_APPBOOT:
                 time.sleep(2)
-                th_fwup = FWUploadThread(self.idcode, conf_sock, SOCK_TYPE)
+                th_fwup = FWUploadThread(self.idcode, conf_sock, 'udp')
                 th_fwup.setparam(self.mac_addr, self.filename)
-                
-                # socket 
-                if SOCK_TYPE == 'udp':
-                    pass
-                else:
-                    socket_close(conf_sock)
-                    # ip & port parameter check
-                    ipaddr, port = get_netarg(args.unicast)
-                    conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
-
                 th_fwup.sendCmd('FW')
                 th_fwup.start()
                 th_fwup.join()
             update_state += 1
 
 class MultiConfigThread(threading.Thread):
-    def __init__(self, sock_type, mac_addr, id_code, cmd_list, op_code):
+    def __init__(self, mac_addr, id_code, cmd_list, op_code):
         threading.Thread.__init__(self)
         
-        # TODO: add tcp unicast
-        if sock_type == 'udp':
-            conf_sock = socket_config(SOCK_TYPE)
-        else:
-            ipaddr, port = get_netarg(args.unicast)
-            conf_sock = socket_config(SOCK_TYPE, ipaddr, port)
-
+        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock.open()
         self.wizmsghangler = WIZMSGHandler(conf_sock)
 
         self.mac_addr = mac_addr
@@ -427,6 +415,12 @@ if __name__ == '__main__':
     elif args.macaddr or args.all or args.search or args.multiset:
         if args.macaddr:
             mac_addr = args.macaddr
+            #? 00:08:DC를 생략하고 나머지만 입력해도 인식되도록 설정
+            # check: length / 00:08:DC 포함 여부 / 
+            if "00:08:DC" not in mac_addr and len(mac_addr) == 8:
+                print('mac_addr:', len(mac_addr), mac_addr)
+                mac_addr = "00:08:DC:" + mac_addr
+
             if wiz752cmdObj.isvalidparameter("MC", mac_addr) is False :
                 sys.stdout.write("Invalid Mac address!\r\n")
                 sys.exit(0)
@@ -476,12 +470,12 @@ if __name__ == '__main__':
                     op_code = OP_FWUP
                     print('[Multi] Device FW upload: device %d, %s' % (i+1, mac_addr))
                     fwup_name = 'th%d_fwup' % (i)
-                    fwup_name = UploadThread(mac_addr, searchcode, args.fwfile)
+                    fwup_name = UploadThread(conf_sock, mac_addr, searchcode, args.fwfile)
                     fwup_name.start()
                 else: 
                     if args.multiset:
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, OP_SETCOMMAND)
+                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETCOMMAND)
                         th_name.set_multiip(host_ip)
                         th_name.start()
                     elif args.getfile:
@@ -498,7 +492,7 @@ if __name__ == '__main__':
                         op_code = OP_SETFILE
                         print('[Setfile] Device [%s] Config from \'%s\' file.' % (mac_addr, args.setfile))
                         cmd_list = wizmakecmd.set_from_file(mac_addr, searchcode, args.setfile)
-                        th_setfile = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, OP_SETFILE)
+                        th_setfile = MultiConfigThread(mac_addr, searchcode, cmd_list, OP_SETFILE)
                         th_setfile.start()
                     else:
                         if args.reset:
@@ -514,7 +508,7 @@ if __name__ == '__main__':
                             print('[Multi] Setting devcies %d: %s' % (i+1, mac_addr))
                             cmd_list = wizmakecmd.setcommand(mac_addr, searchcode, list(setcmd.keys()), list(setcmd.values()))
                         th_name = 'th%d_config' % (i)
-                        th_name = MultiConfigThread(SOCK_TYPE, mac_addr, searchcode, cmd_list, op_code)
+                        th_name = MultiConfigThread(mac_addr, searchcode, cmd_list, op_code)
                         th_name.start()
                         time.sleep(0.3)
                     if args.getfile:

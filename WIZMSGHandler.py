@@ -112,8 +112,10 @@ class WIZMSGHandler:
                     # print('config reply:', configreply)
                     readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
 
-            if len(readready) == 0:
+            # if len(readready) == 0:
+            if self.getreply is not None:
                 break
+
         if self.getreply is not None:
             return 1
         else:
