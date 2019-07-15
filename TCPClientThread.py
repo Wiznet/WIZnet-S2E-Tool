@@ -2,7 +2,6 @@
 
 # Implemented by James YS Kim
 
-
 import sys
 
 # sys.path.append('./TCPClient/')
@@ -13,9 +12,10 @@ import threading
 # import thread
 
 from wizsocket.TCPClient import TCPClient
-from time import gmtime, strftime, localtime
+from time import strftime, localtime
 
 msg = b"Hello WIZ750SR\r"
+
 
 class TCPClientThread(threading.Thread):
     def __init__(self, serverip, serverport, trycount):
@@ -44,7 +44,8 @@ class TCPClientThread(threading.Thread):
         # if not self.f.closed:
         if self.totaltrycount > 0:
             logstr = "======================================\r\n"
-            logstr = logstr + '[' + self.serverip + ':' + str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
+            logstr = logstr + '[' + self.serverip + ':' + \
+                str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
             logstr = logstr + 'Total try: ' + str(self.totaltrycount) + '\r\n'
             logstr = logstr + 'Success count: ' + str(self.successcount) + '\r\n'
             logstr = logstr + 'Fail count: ' + str(self.failcount) + '\r\n'
@@ -54,13 +55,14 @@ class TCPClientThread(threading.Thread):
             sys.stdout.write(logstr)
         else:
             logstr = "======================================\r\n"
-            logstr = logstr + '[' + self.serverip + ':' + str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
+            logstr = logstr + '[' + self.serverip + ':' + \
+                str(self.serverport) + '] stopped at ' + strftime("%d %b %Y %H:%M:%S", localtime()) + '\r\n'
             logstr = logstr + 'Connection Failed\r\n'
             logstr = logstr + '======================================\r\n'
             sys.stdout.write(logstr)
         #     self.f.write(logstr)
-        if sys.version_info < (2, 9):
-            self._Thread__stop()
+        # if sys.version_info < (2, 9):
+        #     self._Thread__stop()
 
     def myTimer(self):
         sys.stdout.write('timer1 timeout\r\n')
@@ -125,7 +127,7 @@ class TCPClientThread(threading.Thread):
                             if self.trycount is not -1 and self.totaltrycount >= self.trycount:
                                 break
                             # self.client.write(msg)
-                            self.client.sendto(msg)
+                            self.client.write(msg)
                             logmsg = msg.decode()
                             logstr = '[' + self.serverip + '] sent ' + logmsg + '\r\n'
                             sys.stdout.write(logstr)
@@ -169,8 +171,8 @@ class TCPClientThread(threading.Thread):
                             # self.f.write(logstr)
 
                             logstr = logstr + 'success rate : ' \
-                                     + "{0:.2f}".format(float(self.successcount) / float(self.totaltrycount) * 100) + '%, [' \
-                                     + str(self.successcount) + '/' + str(self.totaltrycount) + ']\r\n'
+                                + "{0:.2f}".format(float(self.successcount) / float(self.totaltrycount) * 100) + '%, [' \
+                                + str(self.successcount) + '/' + str(self.totaltrycount) + ']\r\n'
                             sys.stdout.write(logstr)
                             # self.f.write(logstr)
                             time.sleep(0.1)
@@ -185,8 +187,8 @@ class TCPClientThread(threading.Thread):
                             self.failcount += 1
                             #						self.f.write(logstr)
                             logstr = logstr + ' success rate : ' \
-                                     + "{0:.2f}".format(float(self.successcount) / float(self.totaltrycount) * 100) + '% [' \
-                                     + str(self.successcount) + '/' + str(self.totaltrycount) + ']\r\n'
+                                + "{0:.2f}".format(float(self.successcount) / float(self.totaltrycount) * 100) + '% [' \
+                                + str(self.successcount) + '/' + str(self.totaltrycount) + ']\r\n'
                             sys.stdout.write(logstr)
                             # self.f.write(logstr)
                             # time.sleep(3)
@@ -207,6 +209,7 @@ class TCPClientThread(threading.Thread):
             sys.exit(0)
         finally:
             self.stop()
+
 
 if __name__ == '__main__':
 
@@ -275,4 +278,3 @@ if __name__ == '__main__':
     # finally:
     #     #		time.sleep(5)
     #     fd.close()
-

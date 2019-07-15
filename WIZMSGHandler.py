@@ -1,19 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import socket
-import time
 import threading
-from threading import *
-import struct
-import binascii
+from threading import Timer
 import select
 import sys
 import codecs
-from WIZ750CMDSET import WIZ750CMDSET
+import logging
 from WIZ752CMDSET import WIZ752CMDSET
 
-import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 

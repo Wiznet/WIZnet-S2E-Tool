@@ -23,11 +23,11 @@ OP_GETDETAIL = 5
 ONE_PORT_S2E = '1'
 TWO_PORT_S2E = '2'
 
-if __name__=='__main__':
+if __name__ == '__main__':
     wizarg = WIZArgParser()
     args = wizarg.loopback_arg()
     # print(args)
-        
+
     wizmakecmd = WIZMakeCMD()
 
     if len(sys.argv) <= 4:
@@ -69,7 +69,7 @@ if __name__=='__main__':
                 cmd_list[:] = []
                 mac_addr = wizmsghangler.getmacaddr(i)
                 mac_addr = mac_addr.decode('utf-8')
-                print ("Device %d mac addr: %s" % (i+1, mac_addr))
+                print("Device %d mac addr: %s" % (i+1, mac_addr))
                 target_ip = dst_ip[:lastnumindex + 1] + str(lastnum + i)
                 target_gw = dst_ip[:lastnumindex + 1] + str(1)
                 cmd_list.append(["MA", mac_addr])
@@ -80,13 +80,13 @@ if __name__=='__main__':
                 if args.select is TWO_PORT_S2E:
                     cmd_list.append(["QL", ch1_dst_port])
                 cmd_list.append(["OP", "1"])
-                cmd_list.append(["SV", ""]) # save device setting
-                cmd_list.append(["RT", ""]) # Device reboot
+                cmd_list.append(["SV", ""])  # save device setting
+                cmd_list.append(["RT", ""])  # Device reboot
                 # sys.stdout.write("%s\r\n" % cmd_list)
                 wizmsghangler.makecommands(cmd_list, OP_SETIP)
                 wizmsghangler.sendcommands()
                 wizmsghangler.parseresponse()
-    
+
                 time.sleep(2)
                 t = TCPClientThread(target_ip, int(ch0_dst_port), retrycount)
                 t.start()
@@ -124,7 +124,7 @@ if __name__=='__main__':
     except (KeyboardInterrupt, SystemExit):
         for i in range(len(threads)):
             threads[i].stop()
-            print('thread %d stop. %s' % (i, thread[i]))
+            print('thread %d stop. %s' % (i, threads[i]))
     finally:
         print('Loopback test finished. Factory reset will be proceed.')
         for i in range(0, retval):
@@ -139,4 +139,3 @@ if __name__=='__main__':
             wizmsghangler.makecommands(cmd_list, OP_FACTORYRESET)
             wizmsghangler.sendcommands()
             wizmsghangler.parseresponse()
-            
