@@ -10,9 +10,7 @@ logger = logging.getLogger()
 
 class WIZ107CMDSET:
 	def __init__(self, log_level):
-	
-		self.log_level = log_level
-		
+		self.log_level = log_level		
 		self.cmdset = { "MC" : ["MAC address", 
 										"^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$", 
 										{}, "RO"], 

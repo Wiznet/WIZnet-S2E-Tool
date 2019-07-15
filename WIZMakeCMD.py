@@ -10,13 +10,13 @@ import getopt
 import logging
 import re
 import os
+import logging
 from WIZ750CMDSET import WIZ750CMDSET
 from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
 from FWUploadThread import *
-import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 

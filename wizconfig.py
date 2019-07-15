@@ -10,15 +10,17 @@ import getopt
 import re
 import os
 import subprocess
+import threading
+import logging
+
 from WIZ750CMDSET import WIZ750CMDSET
 from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from WIZArgParser import WIZArgParser
 from FWUploadThread import FWUploadThread, jumpToApp
-from WIZMakeCMD import *
+from WIZMakeCMD import BAUDRATES, WIZMakeCMD
 from wizsocket.TCPClient import TCPClient
-import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
