@@ -98,8 +98,17 @@ class WIZMSGHandler:
     def checkresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
 
+        self.timer1 = Timer(2.0, self.timeout_func)
+        self.timer1.start()
+
         self.getreply = None
         while True:
+
+            if self.istimeout is True:
+                self.timer1.cancel()
+                self.istimeout = False
+                break
+
             for sock in readready:
                 if sock == self.sock.sock:
                     data = self.sock.recvfrom()
