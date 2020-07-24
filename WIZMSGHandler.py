@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import threading
 from threading import Timer
 import select
 import sys
@@ -46,6 +45,8 @@ class WIZMSGHandler:
         self.devst = []
 
         self.getreply = []
+
+        self.wiz752cmdObj = WIZ752CMDSET(1)
 
     def timeout_func(self):
         # print('timeout')
@@ -94,6 +95,19 @@ class WIZMSGHandler:
     def sendcommandsTCP(self):
         self.sock.write(self.msg)
 
+    def check_parameter(self, cmdset):
+        # print('check_parameter()', cmdset, cmdset[:2], cmdset[2:])
+        try:
+            if b'MA' not in cmdset:
+                if self.wiz752cmdObj.isvalidparameter(cmdset[:2].decode(), cmdset[2:].decode()):
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except Exception as e:
+            print('[ERROR] WIZMSGHandler check_parameter(): %r' % e)
+
     # Check the response
     def checkresponse(self):
         readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
@@ -114,7 +128,8 @@ class WIZMSGHandler:
                     data = self.sock.recvfrom()
                     self.getreply = data.splitlines()
                     # print('config reply:', configreply)
-                    readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
+                    readready, writeready, errorready = select.select(
+                        self.inputs, self.outputs, self.errors, 1)
 
             # if len(readready) == 0:
             if self.getreply is not None:
@@ -156,19 +171,26 @@ class WIZMSGHandler:
                     if self.opcode is OP_SEARCHALL:
                         for i in range(0, len(replylists)):
                             if b'MC' in replylists[i]:
-                                self.mac_list.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.mac_list.append(replylists[i][2:])
                             if b'MN' in replylists[i]:
-                                self.devname.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.devname.append(replylists[i][2:])
                             if b'VR' in replylists[i]:
-                                self.version.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.version.append(replylists[i][2:])
                             if b'ST' in replylists[i]:
-                                self.devst.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.devst.append(replylists[i][2:])
                             if b'OP' in replylists[i]:
-                                self.mode_list.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.mode_list.append(replylists[i][2:])
                             if b'LI' in replylists[i]:
-                                self.ip_list.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.ip_list.append(replylists[i][2:])
                             if b'IM' in replylists[i]:
-                                self.ip_mode.append(replylists[i][2:])
+                                if self.check_parameter(replylists[i]):
+                                    self.ip_mode.append(replylists[i][2:])
 
                     elif self.opcode is OP_FWUP:
                         for i in range(0, len(replylists)):
@@ -193,7 +215,8 @@ class WIZMSGHandler:
                                 param = replylists[i][2:].split(b':')
                                 self.reply = replylists[i][2:]
 
-                    readready, writeready, errorready = select.select(self.inputs, self.outputs, self.errors, 1)
+                    readready, writeready, errorready = select.select(
+                        self.inputs, self.outputs, self.errors, 1)
 
         if self.opcode is OP_SEARCHALL:
             return len(self.mac_list)
