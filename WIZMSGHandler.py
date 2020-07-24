@@ -18,7 +18,6 @@ OP_SETFILE = 4
 OP_GETFILE = 5
 OP_FWUP = 6
 
-
 class WIZMSGHandler:
     def __init__(self, sock):
         self.sock = sock

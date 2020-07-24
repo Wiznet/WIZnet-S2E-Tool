@@ -4,9 +4,7 @@ from wizsocket.TCPClient import TCPClient
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 import binascii
-import re
 import sys
-import io
 import time
 import logging
 import threading

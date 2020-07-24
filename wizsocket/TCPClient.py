@@ -2,10 +2,7 @@
 
 import socket
 import time
-import struct
-import binascii
 import select
-import sys
 
 TIMEOUT = 10
 MAXBUFLEN = 1024
@@ -35,9 +32,7 @@ class TCPClient:
         self.state = CLOSE_STATE
         self.timeout = timeout
         self.time = time.time()
-        self.retrycount = 0
         self.working_state = idle_state
-        self.str_list = []
 
     def getsockstate(self):
         return self.sock
@@ -208,8 +203,10 @@ class TCPClient:
         return data
 
     def close(self):
-        if self.sock is not 0:
-            self.sock.close()
+        if self.sock is not None:
+            print('TCPClient close()')
+            # self.sock.close()
+            self.sock.shutdown(1)
         self.state = CLOSE_STATE
 
     def shutdown(self):

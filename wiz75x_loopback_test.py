@@ -74,6 +74,7 @@ if __name__ == '__main__':
                 target_gw = dst_ip[:lastnumindex + 1] + str(1)
                 cmd_list.append(["MA", mac_addr])
                 cmd_list.append(["PW", " "])
+                cmd_list.append(["IM", "0"])
                 cmd_list.append(["LI", target_ip])
                 cmd_list.append(["GW", target_gw])
                 cmd_list.append(["LP", ch0_dst_port])

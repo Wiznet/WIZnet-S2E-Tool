@@ -3,16 +3,12 @@
 
 import socket
 import time
-import struct
-import binascii
 import select
-import sys
 
 TIMEOUT = 10
 MAXBUFLEN = 1024
 
 idle_state = 1
-
 CLOSE_STATE = 1
 OPENTRY_STATE = 2
 OPEN_STATE = 3
