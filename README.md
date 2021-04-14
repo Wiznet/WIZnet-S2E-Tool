@@ -18,9 +18,11 @@
 
 ---
 
-WIZnet-S2E-Tool is command-line module configuration & test tool for WIZnet S2E devices. \
-Python interpreter based and it is platform independent. \
-It works on version 2.7 and 3.6 python.
+WIZnet-S2E-Tool is command-line module configuration & test tool for WIZnet S2E devices.
+
+Python interpreter based and it is platform independent. 
+
+This works on **Python version 3.6 or later**.
 
 # TUTORIAL
 
@@ -57,28 +59,25 @@ You can see the tutorials from below links. This contents will continue to be up
 
 ## Python
 
-WIZnet-S2E-Tool works on Python version 2.7 and 3.6.
+WIZnet-S2E-Tool works on Python version 3.6 or later.
 If you don't have Python, refer to https://www.python.org/
 
 If python already installed, check the version as follow.
 
-    $ python --version
-    Python 2.7.X
+```
+$ python --version
+```
 
-or
-
-    $ python --version
-    Python 3.6.X
 
 ---
 
 # USAGE
 
-    $ python wizconfig.py [Options ...]
+`$ python wizconfig.py [Options ...]`
 
 You can see detail description as following command.
 
-    $ python wizconfig.py -h
+`$ python wizconfig.py -h`
 
 **_<About Channel #N Options>_**
 
@@ -101,7 +100,7 @@ You can check the all available options from this Wiki page: [Getting Started Gu
 
 First, you could search devices use '-s' or '--search' option.
 
-    $ python wizconfig.py -s
+`$ python wizconfig.py -s`
 
 And then **mac_list.txt** is created, there are MAC address information of each device.
 
@@ -113,11 +112,11 @@ First, find the option(s) for you want to set from [Options](#options). And then
 
 - Single Device
 
-      $ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]
+  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]`
 
 - All Devices
 
-      $ python wizconfig.py -a [Options ...]
+  `$ python wizconfig.py -a [Options ...]`
 
 **Example**
 
@@ -125,11 +124,11 @@ Set baud rate to 115200 of 1 port S2E device. (use --baud0 option)
 
 If device's mac address is '00:08:DC:AA:BB:CC', you can set like this.
 
-    $ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200
+`$ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200`
 
 If you want to set baud rate for all devices on the network, do like this.
 
-    $ python wizconfig.py -a --baud0 115200
+`$ python wizconfig.py -a --baud0 115200`
 
 ---
 
@@ -141,7 +140,7 @@ When do device's firmware upload, need TCP connection with device to send Firmwa
 
 So first, use **-m/--multiset** option for **set ip address to the same network-band as host**.
 
-    $ python wizconfig.py -m <IP address>
+`$ python wizconfig.py -m <IP address>`
 
 ### Step 2 - Firmware upload
 
@@ -156,11 +155,11 @@ If file is ready, perform the F/W update with the following command:
 
 - Single device
 
-      $ python wizconfig.py -d 00:08:DC:XX:XX:XX -u <F/W file path>
+  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX -u <F/W file path>`
 
 - All device
 
-      $ python wizconfig.py -a -u <F/W file path>
+  `$ python wizconfig.py -a -u <F/W file path>`
 
 #### Example
 
@@ -168,18 +167,18 @@ Confirm your host's network band and set IP address for multiple devices. \
 And need to perform -s/--search option before this because -m/--multiset command use 'mac_list.txt'.\
 If your host PC use IP '192.168.0.X',
 
-    $ python wizconfig.py -s
-    $ python wizconfig.py -m 192.168.0.100
+`$ python wizconfig.py -s`
+`$ python wizconfig.py -m 192.168.0.100`
 
 This is just example. You can any address that not use, instead of '100'.
 
 Single device F/W upload (if mac address is '00:08:DC:AA:BB:CC')
 
-    $ python wizconfig.py -d 00:08:DC:AA:BB:CC -u W7500x_S2E_App.bin
+`$ python wizconfig.py -d 00:08:DC:AA:BB:CC -u W7500x_S2E_App.bin`
 
 All device F/W upload (in mac_list.txt)
 
-    $ python wizconfig.py -a -u W7500x_S2E_App.bin
+`$ python wizconfig.py -a -u W7500x_S2E_App.bin`
 
 ---
 
@@ -195,21 +194,21 @@ You can use example files named **cmd_oneport.txt** and **cmd_twoport.txt**.
 
   - for One port
 
-        $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_oneport.txt
+    `$ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_oneport.txt`
 
   - for Two port
 
-        $ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_twoport.txt
+    `$ python wizconfig.py -d 00:08:DC:XX:XX:XX --getfile cmd_twoport.txt`
 
 - ALL devices
 
   - for One port
 
-        $ python wizconfig.py -a --getfile cmd_oneport.txt
+    `$ python wizconfig.py -a --getfile cmd_oneport.txt`
 
   - for Two port
 
-        $ python wizconfig.py -a --getfile cmd_twoport.txt
+    `$ python wizconfig.py -a --getfile cmd_twoport.txt`
 
 It will create log file(s) named **getfile_0008DCXXXXXX.log** that contains information about the device.
 
@@ -234,11 +233,11 @@ Then, config device use --setfile option.
 
 - Single device
 
-      $ python wizconfig.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt
+  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt`
 
 - ALL devices
 
-      $ python wizconfig.py -a --setfile set_cmd.txt
+  `$ python wizconfig.py -a --setfile set_cmd.txt`
 
 ---
 
@@ -270,7 +269,7 @@ optional arguments:
 
 -t/--targetip option is for set IP address to the same network-band as host.
 
-    $ python wiz75x_loopback_test.py -s <number of port> -t 192.168.X.X
+  `$ python wiz75x_loopback_test.py -s <number of port> -t 192.168.X.X`
 
 #### Example
 
@@ -278,11 +277,11 @@ optional arguments:
 
 If host IP address is 192.168.0.50 and device is 1 port S2E module,
 
-    $ python wiz75x_loopback_test.py -s 1 -t 192.168.0.100
+  `$ python wiz75x_loopback_test.py -s 1 -t 192.168.0.100`
 
 If device is 2 port S2E module,
 
-    $ python wiz75x_loopback_test.py -s 2 -t 192.168.0.100
+  `$ python wiz75x_loopback_test.py -s 2 -t 192.168.0.100`
 
 ---
 

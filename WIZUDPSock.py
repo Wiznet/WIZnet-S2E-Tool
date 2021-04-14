@@ -2,6 +2,7 @@
 
 import socket
 
+
 class WIZUDPSock:
     def __init__(self, port, peerport):
         self.sock = None
