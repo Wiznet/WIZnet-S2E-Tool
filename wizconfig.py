@@ -16,7 +16,7 @@ from WIZMakeCMD import BAUDRATES, WIZMakeCMD
 from wizsocket.TCPClient import TCPClient
 
 
-VERSION = "v1.2.0 dev"
+VERSION = "v1.2.0"
 
 OP_SEARCHALL = 1
 OP_RESET = 2
