@@ -2,6 +2,7 @@
 - [SUPPORT DEVICES](#support-devices)
   - [1 Port Serial to Ethernet Module](#1-port-serial-to-ethernet-module)
   - [2 Port Serial to Ethernet Module](#2-port-serial-to-ethernet-module)
+  - [Pre-programmed MCU](#pre-programmed-mcu)
 - [PREREQUISITES](#prerequisites)
   - [Python](#python)
 - [USAGE](#usage)
@@ -9,10 +10,15 @@
   - [Search Devices](#search-devices)
   - [Configuration](#configuration)
   - [Firmware Upload](#firmware-upload)
+    - [Step 1 - Set IP address](#step-1---set-ip-address)
+    - [Step 2 - Firmware upload](#step-2---firmware-upload)
   - [Using File Option](#using-file-option)
+    - [Getfile](#getfile)
+    - [Setfile](#setfile)
 - [GUI Configuration Tool](#gui-configuration-tool)
 - [TEST TOOL](#test-tool)
   - [Loopback Test](#loopback-test)
+    - [Usage](#usage-1)
 - [Wiki](#wiki)
 - [TroubleShooting](#troubleshooting)
 
@@ -26,14 +32,7 @@ This works on **Python version 3.6 or later**.
 
 # TUTORIAL
 
-[WIZwiki](https://wizwiki.net/wiki/doku.php) provides a step-by-step tutorial of WIZnet-S2E-Tool. \
-You can see the tutorials from below links. This contents will continue to be updated.
-
-- [1. Overview & Environment](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:overview:en)
-- [2. How to use CLI Config Tool](https://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:option:en)
-- [3. Single device configuration](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:single:en)
-- [4. Multi devices configuration](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:multi:en)
-- [5. Using File Options](https://wizwiki.net/wiki/doku.php?id=products:wiz750sr:clitool:fileoption:en)
+[WIZnet Documents](https://docs.wiznet.io/) provides a step-by-step tutorial of WIZnet-S2E-Tool.
 
 ---
 
@@ -41,17 +40,20 @@ You can see the tutorials from below links. This contents will continue to be up
 
 ## 1 Port Serial to Ethernet Module
 
-- [WIZ750SR](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:start)
-  - [WIZ750SR Github page](https://github.com/Wiznet/WIZ750SR)
-- [WIZ750SR-100](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-100:start)
-- [WIZ750SR-105](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-105:start)
-- [WIZ750SR-110](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr-110:start)
-- [WIZ107SR](http://www.wiznet.io/product-item/wiz107sr/) & [WIZ108SR](http://www.wiznet.io/product-item/wiz108sr/)
+- [WIZ750SR](https://docs.wiznet.io/Product/S2E-Module/WIZ750SR)
+  - [WIZ750SR Github repository](https://github.com/Wiznet/WIZ750SR)
+- [WIZ750SR-100](https://docs.wiznet.io/Product/S2E-Module/WIZ750SR-1xx-Series/WIZ750SR-100)
+- [WIZ750SR-105](https://docs.wiznet.io/Product/S2E-Module/WIZ750SR-1xx-Series/WIZ750SR-105)
+- [WIZ750SR-110](https://docs.wiznet.io/Product/S2E-Module/WIZ750SR-1xx-Series/WIZ750SR-110)
+- [WIZ107SR](https://docs.wiznet.io/Product/S2E-Module/WIZ107SR) & [WIZ108SR](https://docs.wiznet.io/Product/S2E-Module/WIZ108SR)
 
 ## 2 Port Serial to Ethernet Module
 
-- [WIZ752SR-120](https://wizwiki.net/wiki/doku.php?id=products:s2e_module:wiz752sr-120:start)
-- [WIZ752SR-125](https://wizwiki.net/wiki/doku.php?id=products:s2e_module:wiz752sr-125:start)
+- [WIZ752SR-120](https://docs.wiznet.io/Product/S2E-Module/WIZ752SR-12x-Series/WIZ752SR-120)
+- [WIZ752SR-125](https://docs.wiznet.io/Product/S2E-Module/WIZ752SR-12x-Series/WIZ752SR-125)
+
+## Pre-programmed MCU
+- [W7500(P)-S2E](https://docs.wiznet.io/Product/Pre-programmed-MCU/W7500P-S2E/w7500p-s2e-EN)
 
 ---
 
@@ -94,7 +96,6 @@ And **all other options are common** for 1 port & 2 port S2E devices.
 
 You can check the all available options from this Wiki page: [Getting Started Guide - Options.](https://github.com/Wiznet/WIZnet-S2E-Tool/wiki/Options)
 
----
 
 ## Search Devices
 
@@ -104,7 +105,6 @@ First, you could search devices use '-s' or '--search' option.
 
 And then **mac_list.txt** is created, there are MAC address information of each device.
 
----
 
 ## Configuration
 
@@ -130,7 +130,6 @@ If you want to set baud rate for all devices on the network, do like this.
 
 `$ python wizconfig.py -a --baud0 115200`
 
----
 
 ## Firmware Upload
 
@@ -180,7 +179,6 @@ All device F/W upload (in mac_list.txt)
 
 `$ python wizconfig.py -a -u W7500x_S2E_App.bin`
 
----
 
 ## Using File Option
 
@@ -216,7 +214,7 @@ It will create log file(s) named **getfile_0008DCXXXXXX.log** that contains info
 
 You can save the settings you want to keep to a file and set them with the --setfile option. It can be used as macro.
 
-First, To use this option, refer to WIZnet wiki's [WIZ750SR command manual](http://wizwiki.net/wiki/doku.php?id=products:wiz750sr:commandmanual:start).
+First, To use this option, refer to WIZnet wiki's [WIZ750SR command manual](https://docs.wiznet.io/Product/S2E-Module/WIZ750SR/command-manual-EN).
 
 List up commands to file. here is an example file, **set_cmd.txt**
 
@@ -295,5 +293,5 @@ You can check the contents of configuration tool wiki on the [WIZnet-S2E-Tool wi
 
 If you have any problems, use one of the links below and **please report the problem.**
 
-- [Github Issue page](https://github.com/Wiznet/WIZnet-S2E-Tool-GUI/issues)
+- [Github Issue page](https://github.com/Wiznet/WIZnet-S2E-Tool/issues)
 - [WIZnet Forum](https://forum.wiznet.io/)

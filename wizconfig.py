@@ -31,11 +31,11 @@ DEV_STATE_APPUPDATED = 12
 DEV_STATE_BOOTUP = 13
 DEV_STATE_BOOTUPDATED = 14
 
-SOCK_CLOSE_STATE = 21
-SOCK_OPENTRY_STATE = 22
-SOCK_OPEN_STATE = 23
-SOCK_CONNECTTRY_STATE = 24
-SOCK_CONNECT_STATE = 25
+SOCK_CLOSE_STATE = 1
+SOCK_OPENTRY_STATE = 2
+SOCK_OPEN_STATE = 3
+SOCK_CONNECTTRY_STATE = 4
+SOCK_CONNECT_STATE = 5
 
 SOCK_TYPE = "udp"
 
@@ -77,7 +77,7 @@ def net_check_ping(dst_ip):
         shell=True,
     )
     ping_response = do_ping.wait()
-    # logger.info('ping_response', ping_response)
+    # logger.info(f'ping_response: {ping_response}')
     return ping_response
 
 
@@ -92,8 +92,7 @@ def connect_over_tcp(serverip, port, logger):
         retrynum += 1
 
         if tcp_sock.state == SOCK_CLOSE_STATE:
-            # tcp_sock.shutdown()
-            cur_state = tcp_sock.state
+            # cur_state = tcp_sock.state
             try:
                 tcp_sock.open()
                 if tcp_sock.state == SOCK_OPEN_STATE:
@@ -102,7 +101,7 @@ def connect_over_tcp(serverip, port, logger):
             except Exception as e:
                 logger.error(e)
         elif tcp_sock.state == SOCK_OPEN_STATE:
-            cur_state = tcp_sock.state
+            # cur_state = tcp_sock.state
             try:
                 tcp_sock.connect()
                 if tcp_sock.state == SOCK_CONNECT_STATE:
@@ -438,7 +437,7 @@ def get_netarg(arg, logger):
     ipaddr = None
     port = None
 
-    logger.info(">>> arg: ", arg)
+    logger.info(f"arg: {arg}")
 
     if ":" in arg:
         param = arg.split(":")
