@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
 from wizsocket.TCPClient import TCPClient
-from WIZUDPSock import WIZUDPSock
+# from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 import binascii
 import sys
 import time
-import logging
+# import logging
 import threading
-import getopt
+# import getopt
 import os
 
 OP_SEARCHALL = 1
@@ -241,9 +241,7 @@ class FWUploadThread(threading.Thread):
                                         self.timer1.cancel()
                                         self.istimeout = 0
                                     else:
-                                        print(
-                                            f"ERROR: Device[{self.dest_mac}]: No response from device. Stop FW upload..."
-                                        )
+                                        print(f"ERROR: Device[{self.dest_mac}]: No response from device. Stop FW upload...")
                                         self.client.close()
                                         sys.exit(0)
 

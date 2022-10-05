@@ -19,12 +19,13 @@
 - [TEST TOOL](#test-tool)
   - [Loopback Test](#loopback-test)
     - [Usage](#usage-1)
+    - [Example](#example)
 - [Wiki](#wiki)
 - [TroubleShooting](#troubleshooting)
 
 ---
 
-WIZnet-S2E-Tool is command-line module configuration & test tool for WIZnet S2E devices.
+`WIZnet-S2E-Tool` is command-line module configuration & test tool for WIZnet S2E devices.
 
 Python interpreter based and it is platform independent. 
 
@@ -32,7 +33,7 @@ This works on **Python version 3.6 or later**.
 
 # TUTORIAL
 
-[WIZnet Documents](https://docs.wiznet.io/) provides a step-by-step tutorial of WIZnet-S2E-Tool.
+[WIZnet Documents](https://docs.wiznet.io/) provides a step-by-step tutorial of `WIZnet-S2E-Tool`.
 
 ---
 
@@ -61,7 +62,7 @@ This works on **Python version 3.6 or later**.
 
 ## Python
 
-WIZnet-S2E-Tool works on Python version 3.6 or later.
+`WIZnet-S2E-Tool` works on **Python version 3.6 or later**.
 If you don't have Python, refer to https://www.python.org/
 
 If python already installed, check the version as follow.
@@ -79,7 +80,9 @@ $ python --version
 
 You can see detail description as following command.
 
-`$ python wizconfig.py -h`
+```
+$ python wizconfig.py -h
+```
 
 **_<About Channel #N Options>_**
 
@@ -101,7 +104,9 @@ You can check the all available options from this Wiki page: [Getting Started Gu
 
 First, you could search devices use '-s' or '--search' option.
 
-`$ python wizconfig.py -s`
+```
+$ python wizconfig.py -s
+```
 
 And then **mac_list.txt** is created, there are MAC address information of each device.
 
@@ -112,11 +117,15 @@ First, find the option(s) for you want to set from [Options](#options). And then
 
 - Single Device
 
-  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]`
+```
+$ python wizconfig.py -d 00:08:DC:XX:XX:XX [Options ...]
+```
 
 - All Devices
 
-  `$ python wizconfig.py -a [Options ...]`
+```
+$ python wizconfig.py -a [Options ...]
+```
 
 **Example**
 
@@ -124,11 +133,15 @@ Set baud rate to 115200 of 1 port S2E device. (use --baud0 option)
 
 If device's mac address is '00:08:DC:AA:BB:CC', you can set like this.
 
-`$ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200`
+```
+$ python wizconfig.py -d 00:08:DC:AA:BB:CC --baud0 115200
+```
 
 If you want to set baud rate for all devices on the network, do like this.
 
-`$ python wizconfig.py -a --baud0 115200`
+```
+$ python wizconfig.py -a --baud0 115200
+```
 
 
 ## Firmware Upload
@@ -139,13 +152,17 @@ When do device's firmware upload, need TCP connection with device to send Firmwa
 
 So first, use **-m/--multiset** option for **set ip address to the same network-band as host**.
 
-`$ python wizconfig.py -m <IP address>`
+```
+$ python wizconfig.py -m <IP address>
+```
 
 ### Step 2 - Firmware upload
 
 Next, prepare the firmware file. You must use **App Boot firmware** file when do this.
 
-To download firmware file, refer below link.
+To download firmware binary file, refer below link.
+
+**You should use Application Only version to upload firmware using Config tool.**
 
 - https://github.com/Wiznet/WIZ750SR/releases
 - https://github.com/Wiznet/WIZ750SR/tree/master/Projects/S2E_App/bin
@@ -154,30 +171,43 @@ If file is ready, perform the F/W update with the following command:
 
 - Single device
 
-  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX -u <F/W file path>`
+```
+$ python wizconfig.py -d 00:08:DC:XX:XX:XX -u <F/W file path>
+```
 
 - All device
 
-  `$ python wizconfig.py -a -u <F/W file path>`
+```
+$ python wizconfig.py -a -u <F/W file path>
+```
+
 
 #### Example
 
-Confirm your host's network band and set IP address for multiple devices. \
-And need to perform -s/--search option before this because -m/--multiset command use 'mac_list.txt'.\
+Confirm your host's network band and set IP address for multiple devices.
+
+And need to perform -s/--search option before this because -m/--multiset command use `mac_list.txt` file.
+
 If your host PC use IP '192.168.0.X',
 
-`$ python wizconfig.py -s`
-`$ python wizconfig.py -m 192.168.0.100`
+```
+$ python wizconfig.py -s
+$ python wizconfig.py -m 192.168.0.100
+```
 
 This is just example. You can any address that not use, instead of '100'.
 
 Single device F/W upload (if mac address is '00:08:DC:AA:BB:CC')
 
-`$ python wizconfig.py -d 00:08:DC:AA:BB:CC -u W7500x_S2E_App.bin`
+```
+$ python wizconfig.py -d 00:08:DC:AA:BB:CC -u W7500x_S2E_App.bin
+```
 
 All device F/W upload (in mac_list.txt)
 
-`$ python wizconfig.py -a -u W7500x_S2E_App.bin`
+```
+$ python wizconfig.py -a -u W7500x_S2E_App.bin
+```
 
 
 ## Using File Option
@@ -231,11 +261,15 @@ Then, config device use --setfile option.
 
 - Single device
 
-  `$ python wizconfig.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt`
+```
+$ python wizconfig.py -d 00:08:DC:XX:XX:XX --setfile set_cmd.txt
+```
 
 - ALL devices
 
-  `$ python wizconfig.py -a --setfile set_cmd.txt`
+```
+$ python wizconfig.py -a --setfile set_cmd.txt
+```
 
 ---
 
@@ -252,7 +286,7 @@ GUI configuration tool can be refer from [WIZnet-S2E-Tool-GUI github page.](http
 This tool is perform simple loopback test for functional verification of WIZ75XSR devices.
 
 - **_Warning_**  
-   For loopback test, _TX/RX pin(of serial connector:D-SUB9 port) must be connected_ (use jumper connector).
+   For loopback test, _TX/RX pin(of serial connector:D-SUB9 port, Pin 2 & 3) must be connected_ (use jumper connector).
 
 ### Usage
 
@@ -269,17 +303,58 @@ optional arguments:
 
   `$ python wiz75x_loopback_test.py -s <number of port> -t 192.168.X.X`
 
-#### Example
+### Example
 
 -r/--retry is optional, and -s/--select and -t/--targetip is essential.
 
 If host IP address is 192.168.0.50 and device is 1 port S2E module,
 
-  `$ python wiz75x_loopback_test.py -s 1 -t 192.168.0.100`
+```
+$ python wiz75x_loopback_test.py -s 1 -t 192.168.0.100
+```
 
 If device is 2 port S2E module,
 
-  `$ python wiz75x_loopback_test.py -s 2 -t 192.168.0.100`
+```
+$ python wiz75x_loopback_test.py -s 2 -t 192.168.0.100
+```
+
+
+**Result example**
+```
+>python wiz75x_loopback_test.py -t 192.168.50.208 -r 5
+1 devices are detected
+Device 1 mac addr: 00:08:DC:XX:XX:XX
+thread for '192.168.50.208' is starting
+['192.168.50.208'] is OPEN
+['192.168.50.208'] is CONNECTED
+[192.168.50.208] sent Hello WIZ750SR
+[192.168.50.208] received Hello WIZ750SR
+[192.168.50.208] 05 Oct 2022 15:23:37: success, success rate : 100.00%, [1/1]
+[192.168.50.208] sent Hello WIZ750SR
+[192.168.50.208] received Hello WIZ750SR
+[192.168.50.208] 05 Oct 2022 15:23:38: success, success rate : 100.00%, [2/2]
+[192.168.50.208] sent Hello WIZ750SR
+[192.168.50.208] received Hello WIZ750SR
+[192.168.50.208] 05 Oct 2022 15:23:38: success, success rate : 100.00%, [3/3]
+[192.168.50.208] sent Hello WIZ750SR
+[192.168.50.208] received Hello WIZ750SR
+[192.168.50.208] 05 Oct 2022 15:23:38: success, success rate : 100.00%, [4/4]
+[192.168.50.208] sent Hello WIZ750SR
+[192.168.50.208] received Hello WIZ750SR
+[192.168.50.208] 05 Oct 2022 15:23:39: success, success rate : 100.00%, [5/5]
+TCPClient close()
+thread for 192.168.50.208:5000 is shutdowning
+======================================
+[192.168.50.208:5000] stopped at 05 Oct 2022 15:23:39
+Total try: 5
+Success count: 5
+Fail count: 0
+Success Rate: 100.0%
+======================================
+all threads are dead
+Loopback test finished. Factory reset will be proceed.
+```
 
 ---
 

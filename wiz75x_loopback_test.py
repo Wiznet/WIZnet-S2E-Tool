@@ -2,7 +2,7 @@
 
 import time
 import sys
-from WIZ750CMDSET import WIZ750CMDSET
+# from cmdset.WIZ750CMDSET import WIZ750CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
 from TCPClientThread import TCPClientThread

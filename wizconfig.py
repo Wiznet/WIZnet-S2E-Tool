@@ -6,7 +6,7 @@ import subprocess
 import threading
 import logging
 
-from WIZ750CMDSET import WIZ750CMDSET
+# from WIZ750CMDSET import WIZ750CMDSET
 from WIZ752CMDSET import WIZ752CMDSET
 from WIZUDPSock import WIZUDPSock
 from WIZMSGHandler import WIZMSGHandler
@@ -16,7 +16,7 @@ from WIZMakeCMD import BAUDRATES, WIZMakeCMD
 from wizsocket.TCPClient import TCPClient
 
 
-VERSION = "v1.2.0"
+VERSION = "v1.3.0"
 
 OP_SEARCHALL = 1
 OP_RESET = 2
@@ -38,6 +38,7 @@ SOCK_CONNECTTRY_STATE = 4
 SOCK_CONNECT_STATE = 5
 
 SOCK_TYPE = "udp"
+PORT_SEARCH = 50001
 
 
 def get_formatted_logger(log_level):
@@ -120,7 +121,7 @@ def connect_over_tcp(serverip, port, logger):
 
 def socket_close(sock):
     # logger.info("====> socket_close() #1", sock)
-    if sock != None:
+    if sock is not None:
         if sock.state != SOCK_CLOSE_STATE:
             sock.shutdown()
 
@@ -131,7 +132,7 @@ def socket_config(logger, net_opt, serverip=None, port=None):
     """
     # Broadcast
     if net_opt == "udp":
-        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock = WIZUDPSock(5000, PORT_SEARCH)
         conf_sock.open()
 
     # TCP unicast
@@ -168,7 +169,7 @@ class UploadThread(threading.Thread):
     def run(self):
         update_state = DEV_STATE_IDLE
 
-        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock = WIZUDPSock(5000, PORT_SEARCH)
         conf_sock.open()
 
         while update_state <= DEV_STATE_APPUPDATED:
@@ -191,7 +192,7 @@ class MultiConfigThread(threading.Thread):
         threading.Thread.__init__(self)
         self.logger = logger
 
-        conf_sock = WIZUDPSock(5000, 50001)
+        conf_sock = WIZUDPSock(5000, PORT_SEARCH)
         conf_sock.open()
         self.wizmsghangler = WIZMSGHandler(conf_sock)
         self.wizmakecmd = WIZMakeCMD()
@@ -208,7 +209,7 @@ class MultiConfigThread(threading.Thread):
 
         dst_port = "5000"
         lastnumindex = self.host_ip.rfind(".")
-        lastnum = int(self.host_ip[lastnumindex + 1 :])
+        lastnum = int(self.host_ip[lastnumindex + 1:])
         target_ip = self.host_ip[: lastnumindex + 1] + str(lastnum + i)
         target_gw = self.host_ip[: lastnumindex + 1] + str(1)
         self.logger.info(f"[Multi config] Set device IP {self.mac_addr} -> {target_ip}")
@@ -355,19 +356,19 @@ def make_setcmd(args):
     # expansion GPIO
     if args.ga:
         setcmd["CA"] = args.ga[0]
-        if args.ga[0] == "1" and args.ga[1] != None:
+        if args.ga[0] == "1" and args.ga[1] is not None:
             setcmd["GA"] = args.ga[1]
     elif args.gb:
         setcmd["CB"] = args.gb[0]
-        if args.gb[0] == "1" and args.gb[1] != None:
+        if args.gb[0] == "1" and args.gb[1] is not None:
             setcmd["GB"] = args.gb[1]
     elif args.gc:
         setcmd["CC"] = args.gc[0]
-        if args.gc[0] == "1" and args.gc[1] != None:
+        if args.gc[0] == "1" and args.gc[1] is not None:
             setcmd["GC"] = args.gc[1]
     elif args.gd:
         setcmd["CD"] = args.gd[0]
-        if args.gd[0] == "1" and args.gd[1] != None:
+        if args.gd[0] == "1" and args.gd[1] is not None:
             setcmd["GD"] = args.gd[1]
 
     # logger.info('%d, %s' % (len(setcmd), setcmd))
@@ -427,12 +428,8 @@ def make_maclist(profiles, logger):
 def get_netarg(arg, logger):
     # TODO: net argument validation check
     # validation check
-    ip_range = (
-        "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-    )
-    port_range = (
-        "^([0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9][0-9][0-9]|65[0-4][0-9][0-9]|655[0-2][0-9]|6553[0-5])$"
-    )
+    # ip_range = ("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
+    # port_range = ("^([0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9][0-9][0-9]|65[0-4][0-9][0-9]|655[0-2][0-9]|6553[0-5])$")
 
     ipaddr = None
     port = None
@@ -446,7 +443,7 @@ def get_netarg(arg, logger):
     else:
         # default port for search: 50001
         ipaddr = arg
-        port = 50001
+        port = PORT_SEARCH
 
     return ipaddr, port
 
@@ -505,7 +502,7 @@ def main():
                 logger.info("mac_addr:", len(mac_addr), mac_addr)
                 mac_addr = "00:08:DC:" + mac_addr
 
-            if wiz752cmdObj.isvalidparameter("MC", mac_addr) == False:
+            if wiz752cmdObj.isvalidparameter("MC", mac_addr) is not False:
                 logger.info("Invalid Mac address!\r\n")
                 sys.exit(0)
 
@@ -524,10 +521,8 @@ def main():
         setcmd_cmd = list(setcmd.keys())
         for i in range(len(setcmd)):
             # logger.info('%r , %r' % (setcmd_cmd[i], setcmd.get(setcmd_cmd[i])))
-            if wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) == False:
-                logger.info(
-                    f"{'#' * 25}\nInvalid parameter: {setcmd.get(setcmd_cmd[i])} \nPlease refer to {sys.argv[0]} -h\r\n"
-                )
+            if wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) is not False:
+                logger.info(f"{'#' * 25}\nInvalid parameter: {setcmd.get(setcmd_cmd[i])} \nPlease refer to {sys.argv[0]} -h\r\n")
                 sys.exit(0)
 
         # ALL devices config
@@ -545,7 +540,7 @@ def main():
             if args.multiset:
                 host_ip = args.multiset
                 # logger.info('Host ip: %s\n' % host_ip)
-                if wiz752cmdObj.isvalidparameter("LI", host_ip) == False:
+                if wiz752cmdObj.isvalidparameter("LI", host_ip) is not False:
                     logger.info("Invalid IP address!\r\n")
                     sys.exit(0)
 
