@@ -502,7 +502,7 @@ def main():
                 logger.info("mac_addr:", len(mac_addr), mac_addr)
                 mac_addr = "00:08:DC:" + mac_addr
 
-            if wiz752cmdObj.isvalidparameter("MC", mac_addr) is not False:
+            if not wiz752cmdObj.isvalidparameter("MC", mac_addr):
                 logger.info("Invalid Mac address!\r\n")
                 sys.exit(0)
 
@@ -521,7 +521,7 @@ def main():
         setcmd_cmd = list(setcmd.keys())
         for i in range(len(setcmd)):
             # logger.info('%r , %r' % (setcmd_cmd[i], setcmd.get(setcmd_cmd[i])))
-            if wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])) is not False:
+            if not wiz752cmdObj.isvalidparameter(setcmd_cmd[i], setcmd.get(setcmd_cmd[i])):
                 logger.info(f"{'#' * 25}\nInvalid parameter: {setcmd.get(setcmd_cmd[i])} \nPlease refer to {sys.argv[0]} -h\r\n")
                 sys.exit(0)
 
@@ -540,7 +540,7 @@ def main():
             if args.multiset:
                 host_ip = args.multiset
                 # logger.info('Host ip: %s\n' % host_ip)
-                if wiz752cmdObj.isvalidparameter("LI", host_ip) is not False:
+                if not wiz752cmdObj.isvalidparameter("LI", host_ip):
                     logger.info("Invalid IP address!\r\n")
                     sys.exit(0)
 
